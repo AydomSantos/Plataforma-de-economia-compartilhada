@@ -1,73 +1,74 @@
 
-# Request Management System
+# Sistema de Gerenciamento de Solicitações
 
-A PHP-based web application for managing user requests with authentication and real-time chat functionality.
+Uma aplicação web baseada em PHP para gerenciar solicitações de usuários com autenticação e funcionalidade de chat em tempo real.
 
-## Features
+## Funcionalidades
 
-- User Authentication (Login/Register)
-- Request Management
-- User Dashboard
-- Real-time Chat
-- Profile Management
+- Autenticação de Usuário (Login/Registro)
+- Gerenciamento de Solicitações
+- Painel do Usuário
+- Chat em Tempo Real
+- Gerenciamento de Perfil
+- Teste de Conexão com Banco de Dados
 
-## Project Structure
+## Estrutura do Projeto
 
 ```
 ├── assets/  
-│   ├── css/ (Bootstrap and custom styles)
-│   ├── js/ (JavaScript scripts)
-│   ├── img/ (Icons and logos)
+│   ├── css/ (Bootstrap e estilos personalizados)
+│   ├── js/ (Scripts JavaScript)
+│   ├── img/ (Ícones e logos)
 ├── includes/  
-│   ├── header.php (Common header)
-│   ├── footer.php (Common footer)
-│   ├── db.php (MySQL connection)
-│   ├── auth.php (Authentication functions)
+│   ├── header.php (Cabeçalho comum)
+│   ├── footer.php (Rodapé comum)
+│   ├── db.php (Conexão MySQL)
+│   ├── auth.php (Funções de autenticação)
 ├── classes/  
-│   ├── User.php (User management class)
-│   ├── Request.php (Request management class)
+│   ├── User.php (Classe de gerenciamento de usuário)
+│   ├── Request.php (Classe de gerenciamento de solicitações)
 ├── pages/  
-│   ├── login.php (User login)
-│   ├── register.php (User registration)
-│   ├── dashboard.php (Request listing)
-│   ├── profile.php (User profile)
-│   ├── create_request.php (Create new requests)
-│   ├── chat.php (Real-time chat)
-└── config.php (Global configurations)
+│   ├── login.php (Login de usuário)
+│   ├── register.php (Registro de usuário)
+│   ├── dashboard.php (Listagem de solicitações)
+│   ├── profile.php (Perfil do usuário)
+│   ├── create_request.php (Criar novas solicitações)
+│   ├── chat.php (Chat em tempo real)
+└── config.php (Configurações globais)
 ```
 
-## Setup
+## Configuração
 
-1. Configure your database settings in `config.php`
-2. Create a MySQL database named `request_system`
-3. Import the database schema (if provided)
-4. Start the PHP server: `php -S 0.0.0.0:8000`
+1. Configure suas definições de banco de dados em `config.php`
+2. Crie um banco de dados MySQL chamado `request_system`
+3. Importe o esquema do banco de dados (se fornecido)
+4. Inicie o servidor PHP: `php -S 0.0.0.0:8000`
 
-## Requirements
+## Requisitos
 
 - PHP 8.0+
 - MySQL 5.7+
-- Modern web browser
+- Navegador web moderno
 
-## Authentication
+## Autenticação
 
-The system uses session-based authentication with the following features:
-- Secure password hashing
-- Session management
-- Login/logout functionality
-- Registration with email verification
+O sistema utiliza autenticação baseada em sessão com as seguintes funcionalidades:
+- Hash seguro de senha
+- Gerenciamento de sessão
+- Funcionalidade de login/logout
+- Registro com verificação de e-mail
 
-## Database Structure
+## Estrutura do Banco de Dados
 
-The system uses MySQL with the following main tables:
-- users
-- requests
-- messages
+O sistema utiliza MySQL com as seguintes tabelas principais:
+- users (usuários)
+- requests (solicitações)
+- messages (mensagens)
 
-## Contributing
+## Contribuindo
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
+1. Faça um fork do repositório
+2. Crie sua branch de funcionalidade
+3. Commit suas alterações
+4. Push para a branch
+5. Crie um novo Pull Request
