@@ -8,6 +8,27 @@ Uma aplicação web baseada em PHP para facilitar a economia compartilhada, perm
 - Autenticação de Usuários (Login/Registro)
 - Sistema de Sessões Seguro
 - Página Inicial Personalizada
+- Exploração de Pedidos
+- Criação e Gerenciamento de Pedidos
+- Perfil de Usuário com Edição
+- Geolocalização para Pedidos Próximos
+- Sistema de Categorias para Pedidos
+- Interface Responsiva com Bootstrap 5
+- Pesquisa e Filtros de Pedidos
+- Visualização de Detalhes de Pedidos
+- Atualização de Localização do Usuário
+
+## Implementações Recentes
+
+- Sistema de geolocalização para encontrar pedidos próximos
+- Página de exploração de pedidos com filtros por categoria
+- Funcionalidade de edição de perfil de usuário
+- Atualização de localização em tempo real
+- Visualização de pedidos recentes na página inicial
+- Interface responsiva para dispositivos móveis e desktop
+- Navegação intuitiva entre as páginas da plataforma
+- Sistema de ordenação de pedidos (mais recentes, mais antigos, título)
+- Exibição de distância entre usuário e pedidos (quando localização disponível)
 - Marketplace para Produtos
 - Seção de Serviços
 - Área de Comunidade
