@@ -4,7 +4,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'request_system');
+define('DB_NAME', 'del_teste');
 
 // Application configuration
 define('SITE_NAME', 'Request System');
