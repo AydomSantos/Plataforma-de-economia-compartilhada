@@ -1,19 +1,39 @@
 <?php
 session_start();
+require_once '../includes/db.php';
 
 // Verifica se a variável de sessão user_id está definida. Se não estiver,
 // significa que o usuário não está logado, então redireciona para a página de login.
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: ../login.php");
     exit();
 }
 
 // Se a execução chegar até aqui, significa que o usuário está logado.
 // Podemos então exibir o conteúdo da página inicial.
 
-// Opcional: Obter informações do usuário da sessão
+// Obter informações do usuário da sessão
 $user_id = $_SESSION['user_id'];
-$user_name = $_SESSION['user_name'];
+$user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
+
+// Obter informações adicionais do usuário do banco de dados
+$user_query = "SELECT * FROM users WHERE id = ?";
+$user_stmt = $conn->prepare($user_query);
+$user_stmt->bind_param("i", $user_id);
+$user_stmt->execute();
+$user_result = $user_stmt->get_result();
+$user = $user_result->fetch_assoc();
+$user_stmt->close();
+
+// Obter pedidos recentes
+$recent_orders_query = "SELECT o.*, u.name FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC LIMIT 3";
+$recent_orders_result = $conn->query($recent_orders_query);
+$recent_orders = [];
+if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
+    while ($row = $recent_orders_result->fetch_assoc()) {
+        $recent_orders[] = $row;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -40,24 +60,25 @@ $user_name = $_SESSION['user_name'];
                         <a class="nav-link active" href="home.php"><i class="bi bi-house-fill"></i> Início</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="marketplace.php"><i class="bi bi-shop"></i> Marketplace</a>
+                        <a class="nav-link" href="explore_orders.php"><i class="bi bi-shop"></i> Explorar Pedidos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="services.php"><i class="bi bi-tools"></i> Serviços</a>
+                        <a class="nav-link" href="create_order.php"><i class="bi bi-plus-circle"></i> Criar Pedido</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="community.php"><i class="bi bi-people-fill"></i> Comunidade</a>
+                        <a class="nav-link" href="profile.php"><i class="bi bi-person"></i> Meu Perfil</a>
                     </li>
                 </ul>
                 <div class="dropdown">
                     <a class="btn btn-outline-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($user_name); ?>
+                        <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($user_name ?: $user['name']); ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person"></i> Meu Perfil</a></li>
-                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear"></i> Configurações</a></li>
+                        <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-gear"></i> Editar Perfil</a></li>
+                        <li><a class="dropdown-item" id="update-location-btn" href="#"><i class="bi bi-geo-alt"></i> Atualizar Localização</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+                        <li><a class="dropdown-item text-danger" href="../logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
                     </ul>
                 </div>
             </div>
@@ -69,8 +90,14 @@ $user_name = $_SESSION['user_name'];
         <!-- Welcome Card -->
         <div class="card mb-4 shadow-sm">
             <div class="card-body">
-                <h2 class="card-title">Bem-vindo, <?php echo htmlspecialchars($user_name); ?>!</h2>
+                <h2 class="card-title">Bem-vindo, <?php echo htmlspecialchars($user_name ?: $user['name']); ?>!</h2>
                 <p class="card-text">Explore nossa plataforma de economia compartilhada e descubra novas oportunidades para compartilhar, trocar e colaborar.</p>
+                <?php if (!$user['latitude'] || !$user['longitude']): ?>
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Sua localização não está configurada. 
+                    <button id="update-location-alert-btn" class="btn btn-sm btn-warning ms-2">Atualizar Localização</button>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -79,30 +106,30 @@ $user_name = $_SESSION['user_name'];
             <div class="col">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body text-center">
-                        <i class="bi bi-cart-plus text-primary" style="font-size: 2rem;"></i>
-                        <h5 class="card-title mt-3">Comprar e Vender</h5>
-                        <p class="card-text">Encontre produtos usados em bom estado ou venda itens que você não usa mais.</p>
-                        <a href="marketplace.php" class="btn btn-outline-primary">Explorar Marketplace</a>
+                        <i class="bi bi-search text-primary" style="font-size: 2rem;"></i>
+                        <h5 class="card-title mt-3">Explorar Pedidos</h5>
+                        <p class="card-text">Encontre pedidos disponíveis na plataforma e ofereça ajuda à comunidade.</p>
+                        <a href="explore_orders.php" class="btn btn-outline-primary">Ver Pedidos</a>
                     </div>
                 </div>
             </div>
             <div class="col">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body text-center">
-                        <i class="bi bi-arrow-repeat text-success" style="font-size: 2rem;"></i>
-                        <h5 class="card-title mt-3">Trocar Serviços</h5>
-                        <p class="card-text">Ofereça suas habilidades ou encontre alguém que possa ajudar com o que você precisa.</p>
-                        <a href="services.php" class="btn btn-outline-success">Ver Serviços</a>
+                        <i class="bi bi-plus-circle text-success" style="font-size: 2rem;"></i>
+                        <h5 class="card-title mt-3">Criar Pedido</h5>
+                        <p class="card-text">Crie um novo pedido para solicitar ajuda ou oferecer recursos para compartilhar.</p>
+                        <a href="create_order.php" class="btn btn-outline-success">Criar Pedido</a>
                     </div>
                 </div>
             </div>
             <div class="col">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body text-center">
-                        <i class="bi bi-people text-info" style="font-size: 2rem;"></i>
-                        <h5 class="card-title mt-3">Comunidade</h5>
-                        <p class="card-text">Conecte-se com pessoas que compartilham seus interesses e valores.</p>
-                        <a href="community.php" class="btn btn-outline-info">Participar</a>
+                        <i class="bi bi-person text-info" style="font-size: 2rem;"></i>
+                        <h5 class="card-title mt-3">Meu Perfil</h5>
+                        <p class="card-text">Gerencie seu perfil, veja seus pedidos e acompanhe suas atividades.</p>
+                        <a href="profile.php" class="btn btn-outline-info">Ver Perfil</a>
                     </div>
                 </div>
             </div>
@@ -111,30 +138,40 @@ $user_name = $_SESSION['user_name'];
         <!-- Recent Activity -->
         <div class="card shadow-sm">
             <div class="card-header bg-light">
-                <h5 class="mb-0">Atividades Recentes</h5>
+                <h5 class="mb-0">Pedidos Recentes</h5>
             </div>
             <div class="list-group list-group-flush">
-                <a href="#" class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">Novo item no marketplace</h6>
-                        <small class="text-muted">3 horas atrás</small>
+                <?php if (empty($recent_orders)): ?>
+                    <div class="list-group-item">
+                        <p class="mb-1">Nenhum pedido recente encontrado.</p>
                     </div>
-                    <p class="mb-1">Bicicleta em ótimo estado disponível para troca.</p>
-                </a>
-                <a href="#" class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">Serviço adicionado</h6>
-                        <small class="text-muted">1 dia atrás</small>
-                    </div>
-                    <p class="mb-1">Aulas de programação para iniciantes.</p>
-                </a>
-                <a href="#" class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">Evento comunitário</h6>
-                        <small class="text-muted">2 dias atrás</small>
-                    </div>
-                    <p class="mb-1">Workshop de sustentabilidade no próximo sábado.</p>
-                </a>
+                <?php else: ?>
+                    <?php foreach ($recent_orders as $order): ?>
+                        <a href="../view_order.php?id=<?php echo $order['id']; ?>" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1"><?php echo htmlspecialchars($order['title']); ?></h6>
+                                <small class="text-muted">
+                                    <?php 
+                                    $created_at = new DateTime($order['created_at']);
+                                    $now = new DateTime();
+                                    $interval = $created_at->diff($now);
+                                    
+                                    if ($interval->d > 0) {
+                                        echo $interval->d . ' dia(s) atrás';
+                                    } elseif ($interval->h > 0) {
+                                        echo $interval->h . ' hora(s) atrás';
+                                    } else {
+                                        echo $interval->i . ' minuto(s) atrás';
+                                    }
+                                    ?>
+                                </small>
+                            </div>
+                            <p class="mb-1"><?php echo htmlspecialchars(substr($order['description'], 0, 100)) . '...'; ?></p>
+                            <small>Por: <?php echo htmlspecialchars($order['name']); ?></small>
+                            <span class="badge bg-primary"><?php echo htmlspecialchars($order['category']); ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -170,6 +207,48 @@ $user_name = $_SESSION['user_name'];
         </div>
     </footer>
 
+    <!-- Campos ocultos para armazenar a localização -->
+    <input type="hidden" id="user-latitude" name="latitude" value="<?php echo $user['latitude']; ?>">
+    <input type="hidden" id="user-longitude" name="longitude" value="<?php echo $user['longitude']; ?>">
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Script para atualizar a localização do usuário
+        document.getElementById('update-location-btn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            updateLocation(e);
+        });
+        
+        document.getElementById('update-location-alert-btn')?.addEventListener('click', updateLocation);
+
+        function updateLocation(e) {
+            if (e) e.preventDefault();
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    
+                    // Enviar para o servidor via AJAX
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '../update_location.php', true);
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhr.onload = function() {
+                        if (this.status === 200) {
+                            alert('Localização atualizada com sucesso!');
+                            location.reload();
+                        } else {
+                            alert('Erro ao atualizar localização.');
+                        }
+                    };
+                    xhr.send(`latitude=${latitude}&longitude=${longitude}`);
+                }, function() {
+                    alert('Não foi possível obter sua localização. Verifique as permissões do navegador.');
+                });
+            } else {
+                alert('Geolocalização não é suportada pelo seu navegador.');
+            }
+        }
+    </script>
 </body>
 </html>
