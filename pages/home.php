@@ -42,118 +42,210 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Página Inicial - Economia Compartilhada</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .card-hover:hover {
+            transform: translateY(-5px);
+            transition: transform 0.3s ease;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 0.75rem 1.25rem;
+            border: 1px solid #ffeeba;
+            border-radius: 0.25rem;
+            margin-top: 1rem;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 0.2rem;
+            margin-left: 0.5rem;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+    </style>
 </head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="home.php">Economia Compartilhada</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="home.php"><i class="bi bi-house-fill"></i> Início</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="explore_orders.php"><i class="bi bi-shop"></i> Explorar Pedidos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="create_order.php"><i class="bi bi-plus-circle"></i> Criar Pedido</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="profile.php"><i class="bi bi-person"></i> Meu Perfil</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="chat.php"><i class="bi bi-chat-dots"></i> Chat</a>
-                    </li>
-                </ul>
-                <div class="dropdown">
-                    <a class="btn btn-outline-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($user_name ?: $user['name']); ?>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Navigation Bar -->
+    <nav class="bg-blue-600 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <a href="home.php" class="flex-shrink-0 flex items-center text-white font-bold text-xl">
+                        Economia Compartilhada
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person"></i> Meu Perfil</a></li>
-                        <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-gear"></i> Editar Perfil</a></li>
-                        <li><a class="dropdown-item" id="update-location-btn" href="#"><i class="bi bi-geo-alt"></i> Atualizar Localização</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="../logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
-                    </ul>
+                </div>
+                <div class="flex items-center">
+                    <div class="hidden md:ml-6 md:flex md:space-x-8">
+                        <a href="explore_orders.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                            Explorar Pedidos
+                        </a>
+                        <a href="create_order.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                            Criar Pedido
+                        </a>
+                        <a href="chat.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                            Chat
+                        </a>
+                    </div>
+                    <div class="ml-3 relative">
+                        <div class="relative">
+                            <a href="profile.php" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                                <img class="h-8 w-8 rounded-full" src="https://ui-avatars.com/api/?name=<?php echo urlencode($user_name ?: $user['name']); ?>&background=random" alt="Avatar">
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <div class="container py-4">
-        <!-- Welcome Card -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
-                <h2 class="card-title">Bem-vindo, <?php echo htmlspecialchars($user_name ?: $user['name']); ?>!</h2>
-                <p class="card-text">Explore nossa plataforma de economia compartilhada e descubra novas oportunidades para compartilhar, trocar e colaborar.</p>
-                <?php if (!$user['latitude'] || !$user['longitude']): ?>
-                <div class="alert alert-warning mt-3">
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow">
+        <!-- Welcome Section -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900">
+                Bem-vindo, <?php echo htmlspecialchars($user_name ?: $user['name']); ?>!
+            </h2>
+            <p class="mt-3 text-gray-600">
+                Explore nossa plataforma de economia compartilhada e descubra novas oportunidades.
+            </p>
+            <?php if (!$user['latitude'] || !$user['longitude']): ?>
+                <div class="alert-warning mt-4">
                     <i class="bi bi-exclamation-triangle-fill"></i> Sua localização não está configurada. 
-                    <button id="update-location-alert-btn" class="btn btn-sm btn-warning ms-2">Atualizar Localização</button>
+                    <button id="update-location-alert-btn" class="btn-warning">Atualizar Localização</button>
                 </div>
-                <?php endif; ?>
-            </div>
+            <?php endif; ?>
         </div>
 
-        <!-- Features Section -->
-        <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="bi bi-search text-primary" style="font-size: 2rem;"></i>
-                        <h5 class="card-title mt-3">Explorar Pedidos</h5>
-                        <p class="card-text">Encontre pedidos disponíveis na plataforma e ofereça ajuda à comunidade.</p>
-                        <a href="explore_orders.php" class="btn btn-outline-primary">Ver Pedidos</a>
+        <!-- Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <!-- Explore Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-blue-100 rounded-full p-3">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Explorar Pedidos
+                                </dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900">
+                                        Explorar
+                                    </div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4">
+                    <div class="text-sm">
+                        <a href="explore_orders.php" class="font-medium text-blue-600 hover:text-blue-900 flex items-center">
+                            Ver todos
+                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
                     </div>
                 </div>
             </div>
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="bi bi-plus-circle text-success" style="font-size: 2rem;"></i>
-                        <h5 class="card-title mt-3">Criar Pedido</h5>
-                        <p class="card-text">Crie um novo pedido para solicitar ajuda ou oferecer recursos para compartilhar.</p>
-                        <a href="create_order.php" class="btn btn-outline-success">Criar Pedido</a>
+            
+            <!-- Create Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-green-100 rounded-full p-3">
+                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Criar Pedido
+                                </dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900">
+                                        Criar
+                                    </div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4">
+                    <div class="text-sm">
+                        <a href="create_order.php" class="font-medium text-green-600 hover:text-green-900 flex items-center">
+                            Criar
+                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
                     </div>
                 </div>
             </div>
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <i class="bi bi-person text-info" style="font-size: 2rem;"></i>
-                        <h5 class="card-title mt-3">Meu Perfil</h5>
-                        <p class="card-text">Gerencie seu perfil, veja seus pedidos e acompanhe suas atividades.</p>
-                        <a href="profile.php" class="btn btn-outline-info">Ver Perfil</a>
+            
+            <!-- Profile Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-indigo-100 rounded-full p-3">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Meu Perfil
+                                </dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900">
+                                        Perfil
+                                    </div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4">
+                    <div class="text-sm">
+                        <a href="profile.php" class="font-medium text-indigo-600 hover:text-indigo-900 flex items-center">
+                            Ver
+                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Recent Activity -->
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Pedidos Recentes</h5>
-            </div>
-            <div class="list-group list-group-flush">
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h5 class="mb-4 text-xl font-bold text-gray-900">Pedidos Recentes</h5>
+            <div class="space-y-3">
                 <?php if (empty($recent_orders)): ?>
-                    <div class="list-group-item">
-                        <p class="mb-1">Nenhum pedido recente encontrado.</p>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                        <p class="text-gray-500">Nenhum pedido recente encontrado.</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($recent_orders as $order): ?>
-                        <a href="../view_order.php?id=<?php echo $order['id']; ?>" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1"><?php echo htmlspecialchars($order['title']); ?></h6>
-                                <small class="text-muted">
+                        <a href="view_order.php?id=<?php echo $order['id']; ?>" class="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                            <div class="flex justify-between items-start">
+                                <h6 class="font-semibold text-gray-900"><?php echo htmlspecialchars($order['title']); ?></h6>
+                                <small class="text-gray-500 ml-2">
                                     <?php 
                                     $created_at = new DateTime($order['created_at']);
                                     $now = new DateTime();
@@ -169,59 +261,55 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                                     ?>
                                 </small>
                             </div>
-                            <p class="mb-1"><?php echo htmlspecialchars(substr($order['description'], 0, 100)) . '...'; ?></p>
-                            <small>Por: <?php echo htmlspecialchars($order['name']); ?></small>
-                            <span class="badge bg-primary"><?php echo htmlspecialchars($order['category']); ?></span>
+                            <p class="mt-2 text-gray-600"><?php echo htmlspecialchars(substr($order['description'], 0, 100)) . '...'; ?></p>
+                            <div class="mt-2 flex items-center justify-between">
+                                <small class="text-gray-500">Por: <?php echo htmlspecialchars($order['name']); ?></small>
+                                <span class="inline-block bg-blue-500 text-white rounded-full px-2.5 py-0.5 text-xs font-semibold"><?php echo htmlspecialchars($order['category']); ?></span>
+                            </div>
                         </a>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Economia Compartilhada</h5>
-                    <p>Uma plataforma para conectar pessoas e promover o consumo consciente.</p>
+    <footer class="bg-gray-800 text-white py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h5 class="text-lg font-bold mb-4">Economia Compartilhada</h5>
+                    <p class="text-gray-300">Uma plataforma para conectar pessoas e promover o consumo consciente.</p>
                 </div>
-                <div class="col-md-3">
-                    <h5>Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="about.php" class="text-white">Sobre nós</a></li>
-                        <li><a href="terms.php" class="text-white">Termos de uso</a></li>
-                        <li><a href="privacy.php" class="text-white">Política de privacidade</a></li>
+                <div>
+                    <h5 class="text-lg font-bold mb-4">Links</h5>
+                    <ul class="space-y-2">
+                        <li><a href="about.php" class="text-gray-300 hover:text-white transition-colors">Sobre nós</a></li>
+                        <li><a href="terms.php" class="text-gray-300 hover:text-white transition-colors">Termos de uso</a></li>
+                        <li><a href="privacy.php" class="text-gray-300 hover:text-white transition-colors">Política de privacidade</a></li>
                     </ul>
                 </div>
-                <div class="col-md-3">
-                    <h5>Contato</h5>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-envelope"></i> contato@economiacompartilhada.com</li>
-                        <li><i class="bi bi-telephone"></i> (11) 1234-5678</li>
+                <div>
+                    <h5 class="text-lg font-bold mb-4">Contato</h5>
+                    <ul class="space-y-2">
+                        <li class="flex items-center"><i class="bi bi-envelope mr-2"></i> contato@economiacompartilhada.com</li>
+                        <li class="flex items-center"><i class="bi bi-telephone mr-2"></i> (11) 1234-5678</li>
                     </ul>
                 </div>
             </div>
-            <hr>
-            <div class="text-center">
-                <p class="mb-0">&copy; 2023 Economia Compartilhada. Todos os direitos reservados.</p>
+            <hr class="my-6 border-gray-700">
+            <div class="text-center text-gray-400">
+                <p>&copy; 2023 Economia Compartilhada. Todos os direitos reservados.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Campos ocultos para armazenar a localização -->
+    <!-- Hidden fields for location -->
     <input type="hidden" id="user-latitude" name="latitude" value="<?php echo $user['latitude']; ?>">
     <input type="hidden" id="user-longitude" name="longitude" value="<?php echo $user['longitude']; ?>">
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Script para atualizar a localização do usuário
-        document.getElementById('update-location-btn')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            updateLocation(e);
-        });
-        
         document.getElementById('update-location-alert-btn')?.addEventListener('click', updateLocation);
 
         function updateLocation(e) {

@@ -163,11 +163,26 @@ if ($table_exists) {
                             <span>Respostas recebidas:</span>
                             <span class="badge bg-success"><?php echo count($responses); ?></span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <span>Membro desde:</span>
                             <span class="badge bg-secondary">
                                 <?php echo date('d/m/Y', strtotime($user['created_at'])); ?>
                             </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Reputação:</span>
+                            <div>
+                                <?php if ($user['rating'] > 0): ?>
+                                    <span class="badge bg-primary">
+                                        <?php echo number_format($user['rating'], 1); ?> ⭐
+                                    </span>
+                                    <?php if ($user['rating'] >= 4): ?>
+                                        <span class="badge bg-success">Colaborador Top</span>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary">Sem avaliações</span>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                 </div>

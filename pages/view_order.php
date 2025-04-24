@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'includes/db.php';
+require_once '../includes/db.php'; // Changed from 'includes/db.php' to '../includes/db.php'
 
 // Verificar se o ID do pedido foi fornecido
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
@@ -73,7 +73,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
     <?php endif; ?>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include '../includes/header.php'; ?>
     
     <div class="container mt-5">
         <div class="row">
@@ -110,11 +110,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
                             <div class="col-md-6">
                                 <h5>Solicitante:</h5>
                                 <ul class="list-group">
-                                    // In the HTML section where user information is displayed
                                     <li class="list-group-item"><strong>Nome:</strong> <?php echo htmlspecialchars($order['name']); ?></li>
-                                    
-                                    // In the Google Maps info window content
-                                    content: "<strong><?php echo htmlspecialchars($order['title']); ?></strong><br>Solicitado por: <?php echo htmlspecialchars($order['name']); ?>"
                                     <?php if (isset($_SESSION['user_id'])): ?>
                                         <li class="list-group-item"><strong>Email:</strong> <?php echo htmlspecialchars($order['email']); ?></li>
                                     <?php endif; ?>
@@ -124,7 +120,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
                         
                         <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $order['user_id']): ?>
                             <div class="text-center">
-                                <a href="contact_user.php?order_id=<?php echo $order_id; ?>" class="btn btn-success">Entrar em Contato</a>
+                                <a href="chat.php?user=<?php echo $order['user_id']; ?>" class="btn btn-success">Entrar em Contato</a>
                             </div>
                         <?php elseif (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $order['user_id']): ?>
                             <div class="text-center">
@@ -141,7 +137,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
         </div>
     </div>
     
-    <?php include 'includes/footer.php'; ?>
+    <?php include '../includes/footer.php'; ?>
     
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>

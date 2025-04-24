@@ -48,6 +48,20 @@ function setupDatabase($conn) {
             read_at TIMESTAMP NULL,
             FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+        )",
+
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS rating DECIMAL(3,2) DEFAULT 0.00",
+
+        "CREATE TABLE IF NOT EXISTS ratings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            from_user_id INT NOT NULL,
+            to_user_id INT NOT NULL,
+            score INT NOT NULL CHECK (score BETWEEN 1 AND 5),
+            comment TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (to_user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE KEY unique_rating (from_user_id, to_user_id)
         )"
     ];
     

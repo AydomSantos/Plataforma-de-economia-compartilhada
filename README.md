@@ -23,19 +23,24 @@ Uma aplicação web baseada em PHP para facilitar a economia compartilhada, perm
   - Atualização automática de mensagens
   - Indicador de novas mensagens
   - Interface intuitiva com scroll automático
+  - Avatares personalizados com iniciais
+  - Indicadores de status de mensagem
+  - Busca de usuários para novas conversas
 
 ## Implementações Recentes
 
-- Sistema de chat em tempo real para comunicação entre usuários
-- Lista de conversas ativas com últimas mensagens
+- Interface de chat redesenhada com princípios modernos de UX
+- Avatares coloridos com iniciais para identificação rápida de usuários
+- Bolhas de mensagens estilizadas para melhor legibilidade
+- Modal de busca de usuários para iniciar novas conversas
+- Indicadores de tempo para mensagens
 - Atualização automática via AJAX a cada 3 segundos
-- Interface de chat responsiva e amigável
-- Integração com o sistema de usuários existente
-- Marketplace para Produtos
-- Seção de Serviços
-- Área de Comunidade
-- Gerenciamento de Perfil
-- Interface Responsiva com Bootstrap 5
+- Tratamento de estados vazios com mensagens informativas
+- Marketplace para Produtos com categorias e filtros
+- Seção de Serviços com geolocalização
+- Área de Comunidade para interação entre usuários
+- Gerenciamento de Perfil com upload de imagem
+- Interface totalmente responsiva com Bootstrap 5
 
 ## Estrutura do Projeto
 
