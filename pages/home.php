@@ -68,6 +68,9 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                     <li class="nav-item">
                         <a class="nav-link" href="profile.php"><i class="bi bi-person"></i> Meu Perfil</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="chat.php"><i class="bi bi-chat-dots"></i> Chat</a>
+                    </li>
                 </ul>
                 <div class="dropdown">
                     <a class="btn btn-outline-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
