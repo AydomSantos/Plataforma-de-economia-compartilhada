@@ -1,43 +1,37 @@
-
-# Plataforma de Economia Compartilhada
-
+Plataforma de Economia Compartilhada
 Uma aplicação web baseada em PHP para facilitar a economia compartilhada, permitindo aos usuários gerenciar solicitações, oferecer serviços e produtos, com autenticação de usuários e funcionalidades de chat em tempo real.
 
-## Funcionalidades Implementadas
-
-- Autenticação de Usuários (Login/Registro)
-- Sistema de Sessões Seguro
-- Página Inicial Personalizada
-- Exploração de Pedidos
-- Criação e Gerenciamento de Pedidos
-- Perfil de Usuário com Edição
-- Geolocalização para Pedidos Próximos
-- Sistema de Categorias para Pedidos
-- Interface Responsiva com Bootstrap 5
-- Pesquisa e Filtros de Pedidos
-- Visualização de Detalhes de Pedidos
-- Atualização de Localização do Usuário
-
-## Implementações Recentes
-
-- Sistema de geolocalização para encontrar pedidos próximos
-- Página de exploração de pedidos com filtros por categoria
-- Funcionalidade de edição de perfil de usuário
-- Atualização de localização em tempo real
-- Visualização de pedidos recentes na página inicial
-- Interface responsiva para dispositivos móveis e desktop
-- Navegação intuitiva entre as páginas da plataforma
-- Sistema de ordenação de pedidos (mais recentes, mais antigos, título)
-- Exibição de distância entre usuário e pedidos (quando localização disponível)
-- Marketplace para Produtos
-- Seção de Serviços
-- Área de Comunidade
-- Gerenciamento de Perfil
-- Interface Responsiva com Bootstrap 5
-
-## Estrutura do Projeto
-
-```
+Funcionalidades Implementadas
+Autenticação de Usuários (Login/Registro)
+Sistema de Sessões Seguro
+Página Inicial Personalizada
+Exploração de Pedidos
+Criação e Gerenciamento de Pedidos
+Perfil de Usuário com Edição
+Geolocalização para Pedidos Próximos
+Sistema de Categorias para Pedidos
+Interface Responsiva com Bootstrap 5
+Pesquisa e Filtros de Pedidos
+Visualização de Detalhes de Pedidos
+Atualização de Localização do Usuário
+Sistema de Chat em Tempo Real
+Chat privado entre usuários
+Histórico de conversas
+Atualização automática de mensagens
+Indicador de novas mensagens
+Interface intuitiva com scroll automático
+Implementações Recentes
+Sistema de chat em tempo real para comunicação entre usuários
+Lista de conversas ativas com últimas mensagens
+Atualização automática via AJAX a cada 3 segundos
+Interface de chat responsiva e amigável
+Integração com o sistema de usuários existente
+Marketplace para Produtos
+Seção de Serviços
+Área de Comunidade
+Gerenciamento de Perfil
+Interface Responsiva com Bootstrap 5
+Estrutura do Projeto
 ├── assets/  
 │   ├── css/ (Bootstrap e estilos personalizados)
 │   ├── js/ (Scripts JavaScript)
@@ -60,53 +54,32 @@ Uma aplicação web baseada em PHP para facilitar a economia compartilhada, perm
 │   ├── services.php (Ofertas de serviços)
 │   ├── community.php (Área da comunidade)
 │   ├── logout.php (Logout de usuário)
-│   ├── chat.php (Chat em tempo real)
+│   ├── chat.php (Sistema de chat em tempo real)
+│   ├── send_message.php (API para envio de mensagens)
+│   ├── get_messages.php (API para receber mensagens)
+│   ├── check_new_messages.php (API para verificar novas mensagens)
 └── config.php (Configurações globais)
-```
-
-## Configuração
-
-1. Configure suas configurações de banco de dados em `config.php`
-2. Crie um banco de dados MySQL chamado `request_system`
-3. Importe o esquema do banco de dados (se fornecido)
-4. Inicie o servidor PHP: `php -S 0.0.0.0:8000`
-
-## Requisitos
-
-- PHP 8.0+
-- MySQL 5.7+
-- Navegador web moderno
-- XAMPP (recomendado para ambiente de desenvolvimento)
-
-## Autenticação
-
+Configuração
+Configure suas configurações de banco de dados em config.php
+Crie um banco de dados MySQL chamado request_system
+Importe o esquema do banco de dados (se fornecido)
+Inicie o servidor PHP: php -S 0.0.0.0:5000
+Requisitos
+PHP 8.0+
+MySQL 5.7+
+Navegador web moderno
+XAMPP (recomendado para ambiente de desenvolvimento)
+Autenticação
 O sistema utiliza autenticação baseada em sessão com os seguintes recursos:
-- Hash seguro de senha
-- Gerenciamento de sessão
-- Funcionalidade de login/logout
-- Validação de formulários
 
-## Estrutura do Banco de Dados
-
+Hash seguro de senha
+Gerenciamento de sessão
+Funcionalidade de login/logout
+Validação de formulários
+Estrutura do Banco de Dados
 O sistema utiliza MySQL com as seguintes tabelas principais:
-- users (usuários)
-- requests (solicitações)
-- products (produtos)
-- services (serviços)
-- messages (mensagens)
 
-## Contribuindo
-
-1. Faça um fork do repositório
-2. Crie sua branch de recurso
-3. Faça commit das suas alterações
-4. Envie para a branch
-5. Crie um novo Pull Request
-
-## SQL
-
-```sql
--- Criação da tabela de usuários
+-- Tabela de usuários
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -118,8 +91,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-
--- Criação da tabela de solicitações
+-- Tabela de solicitações
 CREATE TABLE requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -131,8 +103,7 @@ CREATE TABLE requests (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
--- Criação da tabela de produtos
+-- Tabela de produtos
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -147,8 +118,7 @@ CREATE TABLE products (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
--- Criação da tabela de serviços
+-- Tabela de serviços
 CREATE TABLE services (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -162,16 +132,19 @@ CREATE TABLE services (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
--- Criação da tabela de mensagens
+-- Tabela de mensagens
 CREATE TABLE messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
-    message TEXT NOT NULL,
-    read_status BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    content TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
 );
-```
+Contribuindo
+Faça um fork do repositório
+Crie sua branch de recurso
+Faça commit das suas alterações
+Envie para a branch
+Crie um novo Pull Request
