@@ -1,13 +1,6 @@
 <?php
-session_start();
 require_once 'includes/db.php';
 require_once 'includes/security.php'; // Added for security functions
-
-// Verificar se o usuário já está logado
-if (isset($_SESSION['user_id'])) {
-    header("Location: pages/home.php");
-    exit();
-}
 
 $error = '';
 
@@ -64,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Plataforma de Economia Compartilhada</title>
-    <script src="https://cdn.tailwindcss.com"></script>  <!-- Added Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="bg-gray-100">
@@ -75,12 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="text-center text-gray-600 mb-6">Acesse sua conta</p>
             <?php if (!empty($error)): ?>
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <strong class="font-bold">Erro:</strong> <span class="block sm:inline"><?php echo $error; ?></span>
+                    <strong class="font-bold">Erro:</strong> <span class="block sm:inline"><?php echo htmlspecialchars($error); ?></span>
                 </div>
             <?php endif; ?>
 
             <form method="POST" action="">
-                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">  <!-- Added CSRF token input -->
+                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <div class="mb-4">
                     <label class="block text-gray-700 font-bold mb-2" for="email">E-mail</label>
                     <input type="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="email" name="email" placeholder="seu@email.com" required>
@@ -104,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="forgot_password.php" class="text-blue-500 hover:underline">Esqueceu sua senha?</a>
             </div>
             <div class="text-center mt-4">
-                <p class="text-gray-600">Não tem uma conta? <a href="register.php" class="text-blue-500 hover:underline">Registre-se</a></p>
+                <p class="text-gray-600">Não tem uma conta? <a href="./pages/register.php" class="text-blue-500 hover:underline">Registre-se</a></p>
             </div>
         </div>
         <div class="text-center mt-4 text-gray-600">
