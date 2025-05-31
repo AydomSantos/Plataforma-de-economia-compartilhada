@@ -25,15 +25,11 @@ $user_result = $user_stmt->get_result();
 $user = $user_result->fetch_assoc();
 $user_stmt->close();
 
-// Obter pedidos recentes (últimos 5)
-$recent_orders_query = "SELECT r.*, u.name FROM requests r 
-                       JOIN users u ON r.user_id = u.id 
-                       ORDER BY r.created_at DESC 
-                       LIMIT 5";
+// Obter pedidos recentes
+$recent_orders_query = "SELECT o.*, u.name FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC LIMIT 3";
 $recent_orders_result = $conn->query($recent_orders_query);
 $recent_orders = [];
-
-if ($recent_orders_result) {
+if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
     while ($row = $recent_orders_result->fetch_assoc()) {
         $recent_orders[] = $row;
     }
@@ -45,129 +41,63 @@ if ($recent_orders_result) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Economia Compartilhada</title>
+    <title>Página Inicial - Economia Compartilhada</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        }
-        
-        .card-hover {
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-        
         .card-hover:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
         }
-        
-        .notification-bell {
-            position: relative;
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 0.75rem 1.25rem;
+            border: 1px solid #ffeeba;
+            border-radius: 0.25rem;
+            margin-top: 1rem;
         }
-        
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 18px;
-            height: 18px;
-            background-color: #ef4444;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 0.2rem;
+            margin-left: 0.5rem;
+            cursor: pointer;
+            border: none;
         }
-        
-        .order-card {
-            transition: all 0.2s ease;
-            border-left: 4px solid transparent;
-        }
-        
-        .order-card:hover {
-            transform: translateX(5px);
-            border-left-color: #4f46e5;
-        }
-        
-        .category-badge {
-            transition: all 0.2s ease;
-        }
-        
-        .category-badge:hover {
-            transform: scale(1.05);
-        }
-        
-        .avatar-ring {
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-        
-        .avatar-ring:hover {
-            border-color: #4f46e5;
-        }
-        
-        .smooth-transition {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fadeIn {
-            animation: fadeIn 0.5s ease-out forwards;
+        .btn-warning:hover {
+            background-color: #e0a800;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bg-gray-100 min-h-screen flex flex-col">
     <!-- Navigation Bar -->
-    <nav class="gradient-bg shadow-lg">
+    <nav class="bg-blue-600 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center">
-                    <a href="home.php" class="flex items-center text-white font-bold text-xl">
-                        <i class="fas fa-handshake mr-2"></i>
-                        <span class="hidden sm:inline">Economia Compartilhada</span>
-                        <span class="sm:hidden">EC</span>
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <a href="home.php" class="flex-shrink-0 flex items-center text-white font-bold text-xl">
+                        Economia Compartilhada
                     </a>
                 </div>
-                
-                <div class="flex items-center space-x-4">
-                    <div class="hidden md:flex space-x-6">
-                        <a href="explore_orders.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium flex items-center">
-                            <i class="fas fa-search mr-2"></i> Explorar
+                <div class="flex items-center">
+                    <div class="hidden md:ml-6 md:flex md:space-x-8">
+                        <a href="explore_orders.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                            Explorar Pedidos
                         </a>
-                        <a href="create_order.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium flex items-center">
-                            <i class="fas fa-plus-circle mr-2"></i> Criar
+                        <a href="create_order.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                            Criar Pedido
                         </a>
-                        <a href="chat.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium flex items-center">
-                            <i class="fas fa-comments mr-2"></i> Chat
+                        <a href="chat.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                            Chat
                         </a>
                     </div>
-                    
-                    <div class="flex items-center space-x-3">
-                        <button class="notification-bell text-white p-2 rounded-full hover:bg-indigo-700 smooth-transition">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-badge">3</span>
-                        </button>
-                        
+                    <div class="ml-3 relative">
                         <div class="relative">
-                            <a href="profile.php" class="flex items-center">
-                                <div class="avatar-ring rounded-full overflow-hidden h-8 w-8">
-                                    <img class="h-full w-full object-cover"
-                                         src="https://ui-avatars.com/api/?name=<?php echo urlencode($user_name ?: $user['name']); ?>&background=4f46e5&color=fff"
-                                         alt="Avatar">
-                                </div>
+                            <a href="profile.php" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                                <img class="h-8 w-8 rounded-full" src="https://ui-avatars.com/api/?name=<?php echo urlencode($user_name ?: $user['name']); ?>&background=random" alt="Avatar">
                             </a>
                         </div>
                     </div>
@@ -176,135 +106,134 @@ if ($recent_orders_result) {
         </div>
     </nav>
 
-    <!-- Mobile Navigation -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-10">
-        <div class="flex justify-around py-3">
-            <a href="explore_orders.php" class="text-gray-600 hover:text-indigo-600 flex flex-col items-center">
-                <i class="fas fa-search text-lg"></i>
-                <span class="text-xs mt-1">Explorar</span>
-            </a>
-            <a href="create_order.php" class="text-gray-600 hover:text-indigo-600 flex flex-col items-center">
-                <i class="fas fa-plus-circle text-lg"></i>
-                <span class="text-xs mt-1">Criar</span>
-            </a>
-            <a href="chat.php" class="text-gray-600 hover:text-indigo-600 flex flex-col items-center">
-                <i class="fas fa-comments text-lg"></i>
-                <span class="text-xs mt-1">Chat</span>
-            </a>
-            <a href="profile.php" class="text-gray-600 hover:text-indigo-600 flex flex-col items-center">
-                <i class="fas fa-user text-lg"></i>
-                <span class="text-xs mt-1">Perfil</span>
-            </a>
-        </div>
-    </div>
-
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow pb-16 md:pb-0">
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow">
         <!-- Welcome Section -->
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-8 animate-fadeIn" style="animation-delay: 0.1s;">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-900">
-                        Olá, <span class="text-indigo-600"><?php echo htmlspecialchars($user_name ?: $user['name']); ?></span>!
-                    </h2>
-                    <p class="mt-2 text-gray-600">
-                        O que você gostaria de fazer hoje?
-                    </p>
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900">
+                Bem-vindo, <?php echo htmlspecialchars($user_name ?: $user['name']); ?>!
+            </h2>
+            <p class="mt-3 text-gray-600">
+                Explore nossa plataforma de economia compartilhada e descubra novas oportunidades.
+            </p>
+            <?php if (!$user['latitude'] || !$user['longitude']): ?>
+                <div class="alert-warning mt-4">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Sua localização não está configurada. 
+                    <button id="update-location-alert-btn" class="btn-warning">Atualizar Localização</button>
                 </div>
-                
-                <?php if (empty($user['latitude']) || empty($user['longitude'])): ?>
-                <div class="mt-4 md:mt-0 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-circle text-yellow-500"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-yellow-700">
-                                Sua localização não está configurada. Isso pode afetar sua experiência.
-                            </p>
-                            <div class="mt-2">
-                                <button id="update-location-alert-btn" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
-                                    <i class="fas fa-map-marker-alt mr-1"></i> Atualizar Localização
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-            </div>
+            <?php endif; ?>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <!-- Explore Card -->
-            <div class="bg-white overflow-hidden shadow rounded-xl card-hover animate-fadeIn" style="animation-delay: 0.2s;">
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
                 <div class="p-6">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
-                            <i class="fas fa-search text-blue-600 text-xl"></i>
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-blue-100 rounded-full p-3">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
                         </div>
-                        <div class="ml-5 flex-1">
-                            <h3 class="text-lg font-medium text-gray-900">Explorar Pedidos</h3>
-                            <p class="mt-1 text-sm text-gray-500">
-                                Encontre oportunidades perto de você
-                            </p>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Explorar Pedidos
+                                </dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900">
+                                        Explorar
+                                    </div>
+                                </dd>
+                            </dl>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-6 py-4">
-                    <a href="explore_orders.php" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
-                        Ver todos <i class="fas fa-chevron-right ml-1 text-xs"></i>
-                    </a>
+                    <div class="text-sm">
+                        <a href="explore_orders.php" class="font-medium text-blue-600 hover:text-blue-900 flex items-center">
+                            Ver todos
+                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </div>
                 </div>
             </div>
-
+            
             <!-- Create Card -->
-            <div class="bg-white overflow-hidden shadow rounded-xl card-hover animate-fadeIn" style="animation-delay: 0.3s;">
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
                 <div class="p-6">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
-                            <i class="fas fa-plus-circle text-green-600 text-xl"></i>
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-green-100 rounded-full p-3">
+                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
                         </div>
-                        <div class="ml-5 flex-1">
-                            <h3 class="text-lg font-medium text-gray-900">Criar Pedido</h3>
-                            <p class="mt-1 text-sm text-gray-500">
-                                Ofereça algo ou solicite ajuda
-                            </p>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Criar Pedido
+                                </dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900">
+                                        Criar
+                                    </div>
+                                </dd>
+                            </dl>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-6 py-4">
-                    <a href="create_order.php" class="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800">
-                        Criar agora <i class="fas fa-chevron-right ml-1 text-xs"></i>
-                    </a>
+                    <div class="text-sm">
+                        <a href="create_order.php" class="font-medium text-green-600 hover:text-green-900 flex items-center">
+                            Criar
+                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </div>
                 </div>
             </div>
-
+            
             <!-- Profile Card -->
-            <div class="bg-white overflow-hidden shadow rounded-xl card-hover animate-fadeIn" style="animation-delay: 0.4s;">
+            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
                 <div class="p-6">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
-                            <i class="fas fa-user-circle text-purple-600 text-xl"></i>
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-indigo-100 rounded-full p-3">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
                         </div>
-                        <div class="ml-5 flex-1">
-                            <h3 class="text-lg font-medium text-gray-900">Meu Perfil</h3>
-                            <p class="mt-1 text-sm text-gray-500">
-                                Gerencie suas informações
-                            </p>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Meu Perfil
+                                </dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900">
+                                        Perfil
+                                    </div>
+                                </dd>
+                            </dl>
                         </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-6 py-4">
-                    <a href="profile.php" class="inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-800">
-                        Ver perfil <i class="fas fa-chevron-right ml-1 text-xs"></i>
-                    </a>
+                    <div class="text-sm">
+                        <a href="profile.php" class="font-medium text-indigo-600 hover:text-indigo-900 flex items-center">
+                            Ver
+                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Recent Activity -->
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
             <h5 class="mb-4 text-xl font-bold text-gray-900">Pedidos Recentes</h5>
             <div class="space-y-3">
                 <?php if (empty($recent_orders)): ?>
@@ -375,7 +304,6 @@ if ($recent_orders_result) {
         </div>
     </footer>
 
-    
     <script>
         // Script para atualizar a localização do usuário
         document.getElementById('update-location-alert-btn')?.addEventListener('click', updateLocation);
