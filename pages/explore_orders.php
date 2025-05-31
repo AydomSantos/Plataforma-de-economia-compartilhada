@@ -1,92 +1,90 @@
 <?php
 session_start();
-require_once '../includes/db.php'; // Fixed path to db.php
+require_once '../includes/db.php';
+
+// Verificar se o usuário está logado
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
 
 // Inicializar variáveis de filtro
-$category_filter = isset($_GET['category']) ? $_GET['category'] : '';
-$search_term = isset($_GET['search']) ? $_GET['search'] : '';
-$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
+$search_term = isset($_GET['search']) ? trim($_GET['search']) : '';
+$category_filter = isset($_GET['category']) ? trim($_GET['category']) : '';
+$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'created_at'; // Inicializar sort_by
 
-// Construir a consulta SQL base
-$sql = "SELECT o.*, u.name, u.latitude, u.longitude 
-        FROM orders o 
-        JOIN users u ON o.user_id = u.id
-        WHERE 1=1";
+// Construir a query base
+$base_query = "SELECT r.*, u.name as user_name FROM requests r JOIN users u ON r.user_id = u.id WHERE 1=1";
 
 $params = [];
 $types = "";
 
-// Adicionar filtro de categoria, se selecionado
+// Adicionar filtros à query
+if (!empty($search_term)) {
+    $base_query .= " AND (r.title LIKE ? OR r.description LIKE ?)";
+    $search_param = "%{$search_term}%";
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $types .= "ss";
+}
+
 if (!empty($category_filter)) {
-    $sql .= " AND o.category = ?";
+    $base_query .= " AND r.category = ?";
     $params[] = $category_filter;
     $types .= "s";
 }
 
-// Adicionar filtro de pesquisa, se fornecido
-if (!empty($search_term)) {
-    $sql .= " AND (o.title LIKE ? OR o.description LIKE ?)";
-    $params[] = "%$search_term%";
-    $params[] = "%$search_term%";
-    $types .= "ss";
-}
-
 // Adicionar ordenação
-switch ($sort_by) {
-    case 'oldest':
-        $sql .= " ORDER BY o.created_at ASC";
-        break;
-    case 'title_asc':
-        $sql .= " ORDER BY o.title ASC";
-        break;
-    case 'title_desc':
-        $sql .= " ORDER BY o.title DESC";
-        break;
-    default: // newest
-        $sql .= " ORDER BY o.created_at DESC";
-        break;
+$allowed_sorts = ['created_at', 'title', 'category'];
+if (in_array($sort_by, $allowed_sorts)) {
+    $base_query .= " ORDER BY r." . $sort_by . " DESC";
+} else {
+    $base_query .= " ORDER BY r.created_at DESC";
 }
 
-// Preparar e executar a consulta
-$stmt = $conn->prepare($sql);
+// Preparar a query
+$stmt = $conn->prepare($base_query);
 
+// Verificar se a preparação foi bem-sucedida
+if (!$stmt) {
+    die("Erro na preparação da query: " . $conn->error);
+}
+
+// Fazer bind dos parâmetros se existirem
 if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
+    if (!$stmt->bind_param($types, ...$params)) {
+        die("Erro no bind de parâmetros: " . $stmt->error);
+    }
 }
 
-$stmt->execute();
+// Executar a query
+if (!$stmt->execute()) {
+    die("Erro na execução da query: " . $stmt->error);
+}
+
 $result = $stmt->get_result();
-$orders = $result->fetch_all(MYSQLI_ASSOC);
+$orders = [];
+
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $orders[] = $row;
+    }
+}
+
 $stmt->close();
 
-// Obter todas as categorias para o filtro
-$categories_query = "SELECT DISTINCT category FROM orders ORDER BY category";
-$categories_result = $conn->query($categories_query);
+// Obter categorias para o filtro
 $categories = [];
+$categories_query = "SELECT DISTINCT category FROM requests WHERE category IS NOT NULL AND category != '' ORDER BY category";
+$categories_result = $conn->query($categories_query);
 
-if ($categories_result->num_rows > 0) {
+if ($categories_result) {
     while ($row = $categories_result->fetch_assoc()) {
         $categories[] = $row['category'];
     }
 }
-
-// Obter a localização do usuário atual (se estiver logado)
-$user_lat = $user_lng = null;
-if (isset($_SESSION['user_id'])) {
-    $user_query = "SELECT latitude, longitude FROM users WHERE id = ?";
-    $user_stmt = $conn->prepare($user_query);
-    $user_stmt->bind_param("i", $_SESSION['user_id']);
-    $user_stmt->execute();
-    $user_result = $user_stmt->get_result();
-    
-    if ($user_row = $user_result->fetch_assoc()) {
-        $user_lat = $user_row['latitude'];
-        $user_lng = $user_row['longitude'];
-    }
-    $user_stmt->close();
-}
-
-// Removida a função calculateDistance() pois já está definida em includes/db.php
 ?>
 
 <!DOCTYPE html>
@@ -94,217 +92,151 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explorar Pedidos - Economia Compartilhada</title>
+    <title>Explorar Pedidos - Plataforma de Economia Compartilhada</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        .order-card {
-            transition: transform 0.3s;
-            height: 100%;
-        }
-        .order-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        }
-        .category-badge {
-            font-size: 0.8rem;
-            padding: 0.4rem 0.6rem;
-            margin-right: 0.3rem;
-            margin-bottom: 0.3rem;
-            border-radius: 50px;
-        }
-        .distance-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-        }
-        .filters-card {
-            position: sticky;
-            top: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
-    
-    <div class="container py-4">
-        <h1 class="mb-4"><i class="bi bi-search"></i> Explorar Pedidos</h1>
-        
-        <div class="row">
-            <!-- Filtros e Pesquisa -->
-            <div class="col-lg-3 mb-4">
-                <div class="card filters-card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="bi bi-funnel"></i> Filtros</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="GET" action="">
-                            <!-- Pesquisa -->
-                            <div class="mb-3">
-                                <label for="search" class="form-label">Pesquisar</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="search" name="search" 
-                                           placeholder="Buscar pedidos..." value="<?php echo htmlspecialchars($search_term); ?>">
-                                    <button class="btn btn-outline-primary" type="submit">
-                                        <i class="bi bi-search"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Categoria -->
-                            <div class="mb-3">
-                                <label for="category" class="form-label">Categoria</label>
-                                <select name="category" id="category" class="form-select">
-                                    <option value="">Todas as categorias</option>
-                                    <?php foreach ($categories as $cat): ?>
-                                        <option value="<?php echo htmlspecialchars($cat); ?>" 
-                                                <?php echo ($category_filter === $cat) ? 'selected' : ''; ?>>
-                                            <?php echo ucfirst(htmlspecialchars($cat)); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
-                            <!-- Ordenação -->
-                            <div class="mb-3">
-                                <label for="sort" class="form-label">Ordenar por</label>
-                                <select name="sort" id="sort" class="form-select">
-                                    <option value="newest" <?php echo ($sort_by === 'newest') ? 'selected' : ''; ?>>
-                                        Mais recentes primeiro
-                                    </option>
-                                    <option value="oldest" <?php echo ($sort_by === 'oldest') ? 'selected' : ''; ?>>
-                                        Mais antigos primeiro
-                                    </option>
-                                    <option value="title_asc" <?php echo ($sort_by === 'title_asc') ? 'selected' : ''; ?>>
-                                        Título (A-Z)
-                                    </option>
-                                    <option value="title_desc" <?php echo ($sort_by === 'title_desc') ? 'selected' : ''; ?>>
-                                        Título (Z-A)
-                                    </option>
-                                </select>
-                            </div>
-                            
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
-                                <?php if (!empty($category_filter) || !empty($search_term) || $sort_by !== 'newest'): ?>
-                                    <a href="explore_orders.php" class="btn btn-outline-secondary">Limpar Filtros</a>
-                                <?php endif; ?>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
-                <!-- Categorias populares -->
-                <div class="card mt-4">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0"><i class="bi bi-tags"></i> Categorias</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php foreach ($categories as $cat): ?>
-                            <a href="explore_orders.php?category=<?php echo urlencode($cat); ?>" 
-                               class="badge bg-<?php echo ($category_filter === $cat) ? 'primary' : 'secondary'; ?> category-badge">
-                                <?php echo ucfirst(htmlspecialchars($cat)); ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Listagem de pedidos -->
-            <div class="col-lg-9">
-                <!-- Resultados da pesquisa -->
-                <div class="card mb-4">
-                    <div class="card-header bg-light">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <?php 
-                                if (!empty($search_term)) {
-                                    echo 'Resultados para: "' . htmlspecialchars($search_term) . '"';
-                                } elseif (!empty($category_filter)) {
-                                    echo 'Categoria: ' . ucfirst(htmlspecialchars($category_filter));
-                                } else {
-                                    echo 'Todos os pedidos';
-                                }
-                                ?>
-                            </h5>
-                            <span class="badge bg-primary"><?php echo count($orders); ?> pedido(s) encontrado(s)</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <?php if (empty($orders)): ?>
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> Nenhum pedido encontrado com os filtros selecionados.
-                    </div>
-                <?php else: ?>
-                    <div class="row row-cols-1 row-cols-md-2 g-4">
-                        <?php foreach ($orders as $order): ?>
-                            <?php
-                            // Calcular a distância se o usuário estiver logado e tiver localização
-                            $distance = null;
-                            if ($user_lat && $user_lng && $order['latitude'] && $order['longitude']) {
-                                $distance = calculateDistance($user_lat, $user_lng, $order['latitude'], $order['longitude']);
-                            }
-                            ?>
-                            <div class="col">
-                                <div class="card order-card">
-                                    <div class="card-header">
-                                        <h5 class="card-title mb-0"><?php echo htmlspecialchars($order['title']); ?></h5>
-                                        <?php if ($distance !== null): ?>
-                                            <span class="distance-badge">
-                                                <i class="bi bi-geo-alt"></i> <?php echo number_format($distance, 1); ?> km
-                                            </span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="card-text"><?php echo nl2br(htmlspecialchars(substr($order['description'], 0, 150))); ?>...</p>
-                                        <div class="mb-3">
-                                            <span class="badge bg-primary"><?php echo ucfirst(htmlspecialchars($order['category'])); ?></span>
-                                        </div>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <i class="bi bi-person-circle me-2 text-primary"></i>
-                                            <span><?php echo htmlspecialchars($order['name']); ?></span>
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-calendar me-2 text-muted"></i>
-                                            <small class="text-muted">
-                                                <?php 
-                                                $created_at = new DateTime($order['created_at']);
-                                                $now = new DateTime();
-                                                $interval = $created_at->diff($now);
-                                                
-                                                if ($interval->d > 0) {
-                                                    echo $interval->d . ' dia(s) atrás';
-                                                } elseif ($interval->h > 0) {
-                                                    echo $interval->h . ' hora(s) atrás';
-                                                } else {
-                                                    echo $interval->i . ' minuto(s) atrás';
-                                                }
-                                                ?>
-                                            </small>
-                                        </div>
-                                    </div>
-                                    <div class="card-footer">
-                                        <a href="view_order.php?id=<?php echo $order['id']; ?>" class="btn btn-primary w-100">
-                                            <i class="bi bi-eye"></i> Ver Detalhes
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+    <!-- Header simples (substituindo o include) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="home.php">Economia Compartilhada</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="home.php">Home</a>
+                <a class="nav-link" href="explore_orders.php">Explorar</a>
+                <a class="nav-link" href="profile.php">Perfil</a>
+                <a class="nav-link" href="logout.php">Sair</a>
             </div>
         </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Formulário de filtros -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Filtros de Busca</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="search" class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="Digite palavras-chave..." 
+                                   value="<?php echo htmlspecialchars($search_term); ?>">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="category" class="form-label">Categoria</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Todas as categorias</option>
+                                <?php if (!empty($categories)): ?>
+                                    <?php foreach ($categories as $category): ?>
+                                        <option value="<?php echo htmlspecialchars($category); ?>" 
+                                                <?php echo ($category_filter === $category) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars(ucfirst($category)); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="sort" class="form-label">Ordenar por</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value="created_at" <?php echo ($sort_by === 'created_at') ? 'selected' : ''; ?>>Data de criação</option>
+                                <option value="title" <?php echo ($sort_by === 'title') ? 'selected' : ''; ?>>Título</option>
+                                <option value="category" <?php echo ($sort_by === 'category') ? 'selected' : ''; ?>>Categoria</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">Buscar</button>
+                            <a href="explore_orders.php" class="btn btn-secondary">Limpar Filtros</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Resultados da pesquisa -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <?php 
+                        if (!empty($search_term)) {
+                            echo 'Resultados para: "' . htmlspecialchars($search_term) . '"';
+                        } elseif (!empty($category_filter)) {
+                            echo 'Categoria: ' . ucfirst(htmlspecialchars($category_filter));
+                        } else {
+                            echo 'Todos os pedidos';
+                        }
+                        ?>
+                    </h5>
+                    <span class="badge bg-primary"><?php echo count($orders); ?> pedido(s) encontrado(s)</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lista de pedidos -->
+        <?php if (!empty($orders)): ?>
+            <div class="row">
+                <?php foreach ($orders as $order): ?>
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title"><?php echo htmlspecialchars($order['title']); ?></h5>
+                                <p class="card-text"><?php echo htmlspecialchars(substr($order['description'], 0, 100)) . '...'; ?></p>
+                                
+                                <?php if (!empty($order['category'])): ?>
+                                    <div class="mb-2">
+                                        <span class="badge bg-secondary"><?php echo htmlspecialchars(ucfirst($order['category'])); ?></span>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        Por: <?php echo htmlspecialchars($order['user_name']); ?>
+                                    </small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        Criado em: <?php echo date('d/m/Y H:i', strtotime($order['created_at'])); ?>
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer">
+                                <div class="d-grid gap-2">
+                                    <a href="order_details.php?id=<?php echo $order['id']; ?>" class="btn btn-primary btn-sm">
+                                        Ver Detalhes
+                                    </a>
+                                    <?php if ($order['user_id'] != $user_id): ?>
+                                        <a href="chat.php?user_id=<?php echo $order['user_id']; ?>" class="btn btn-outline-primary btn-sm">
+                                            Conversar
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <div class="alert alert-info text-center">
+                <h4>Nenhum pedido encontrado</h4>
+                <p>Tente ajustar os filtros de busca ou <a href="create_order.php">criar um novo pedido</a>.</p>
+            </div>
+        <?php endif; ?>
     </div>
     
-    <?php include 'includes/footer.php'; ?>
+    <!-- Footer simples (substituindo o include) -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2023 Plataforma de Economia Compartilhada</p>
+        </div>
+    </footer>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
