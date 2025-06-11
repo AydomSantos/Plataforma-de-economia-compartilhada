@@ -1,6 +1,6 @@
 <?php
 
-require_once '../includes/db.php'; 
+require_once __DIR__ . '/../includes/db.php'; 
 
 // Initialize error variable
 $error = null;
@@ -12,6 +12,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
+
+    // Novo: processa upload da foto
+    $profile_photo = null;
+    if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+        $ext = pathinfo($_FILES['profile_photo']['name'], PATHINFO_EXTENSION);
+        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+        if (in_array(strtolower($ext), $allowed)) {
+            $upload_dir = __DIR__ . '/../uploads/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+            $filename = uniqid('profile_', true) . '.' . $ext;
+            $dest = $upload_dir . $filename;
+            if (move_uploaded_file($_FILES['profile_photo']['tmp_name'], $dest)) {
+                $profile_photo = 'uploads/' . $filename;
+            } else {
+                $error = "Erro ao fazer upload da foto.";
+            }
+        } else {
+            $error = "Formato de imagem não suportado. Use jpg, jpeg, png ou gif.";
+        }
+    }
 
     // Validação básica dos dados
     if (empty($name)) {
@@ -42,9 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Hash da senha antes de salvar no banco de dados
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-            // Prepara a query para inserir o novo usuário
-            $stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $name, $email, $hashed_password);
+            // Prepara a query para inserir o novo usuário (agora inclui profile_photo)
+            $stmt = $conn->prepare("INSERT INTO users (name, email, password, profile_photo) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $name, $email, $hashed_password, $profile_photo);
 
             // Executa a query
             if ($stmt->execute()) {
@@ -88,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <h2 class="mb-0 fs-4">Registro</h2>
                     </div>
                     <div class="card-body p-4">
-                        <form action="register.php" method="POST">
+                        <form action="register.php" method="POST" enctype="multipart/form-data">
                             <div class="mb-3">
                                 <label for="name" class="form-label">Nome:</label>
                                 <input type="text" class="form-control" id="name" name="name" value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>" required>
@@ -104,6 +126,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <div class="mb-3">
                                 <label for="confirm_password" class="form-label">Confirmar Senha:</label>
                                 <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="profile_photo" class="form-label">Foto de Perfil:</label>
+                                <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*">
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Registrar</button>
                         </form>

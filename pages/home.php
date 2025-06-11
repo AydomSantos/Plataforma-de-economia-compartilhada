@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 // Verifica se a variável de sessão user_id está definida. Se não estiver,
 // significa que o usuário não está logado, então redireciona para a página de login.
@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id'])) {
 // Obter informações do usuário da sessão
 $user_id = $_SESSION['user_id'];
 $user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
+
 
 // Obter informações adicionais do usuário do banco de dados
 $user_query = "SELECT * FROM users WHERE id = ?";
@@ -84,7 +85,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                 </div>
                 <div class="flex items-center">
                     <div class="hidden md:ml-6 md:flex md:space-x-8">
-                        <a href="explore_orders.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="pages/explore_orders.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
                             Explorar Pedidos
                         </a>
                         <a href="create_order.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
@@ -94,12 +95,15 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                             Chat
                         </a>
                     </div>
-                    <div class="ml-3 relative">
+                    <div class="ml-3 relative flex items-center">
                         <div class="relative">
-                            <a href="profile.php" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                            <a href="pages/profile.php" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
                                 <img class="h-8 w-8 rounded-full" src="https://ui-avatars.com/api/?name=<?php echo urlencode($user_name ?: $user['name']); ?>&background=random" alt="Avatar">
                             </a>
                         </div>
+                        <a href="pages/logout.php" class="ml-4 px-3 py-2 rounded-md text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors">
+                            Sair
+                        </a>
                     </div>
                 </div>
             </div>
@@ -339,3 +343,4 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
     </script>
 </body>
 </html>
+<?php

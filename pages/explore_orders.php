@@ -16,12 +16,12 @@ $category_filter = isset($_GET['category']) ? trim($_GET['category']) : '';
 $sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'created_at'; // Inicializar sort_by
 
 // Construir a query base
-$base_query = "SELECT r.*, u.name as user_name FROM requests r JOIN users u ON r.user_id = u.id WHERE 1=1";
+$base_query = "SELECT r.*, u.name as user_name FROM requests r JOIN users u ON r.user_id = u.id WHERE r.status = 'publicado'";
 
+// Adicionar filtros à query
 $params = [];
 $types = "";
 
-// Adicionar filtros à query
 if (!empty($search_term)) {
     $base_query .= " AND (r.title LIKE ? OR r.description LIKE ?)";
     $search_param = "%{$search_term}%";
@@ -205,6 +205,12 @@ if ($categories_result) {
                                         Criado em: <?php echo date('d/m/Y H:i', strtotime($order['created_at'])); ?>
                                     </small>
                                 </div>
+                                
+                                <?php if (!empty($order['status'])): ?>
+                                    <div class="mb-2">
+                                        <span class="badge bg-success"><?php echo htmlspecialchars(ucfirst($order['status'])); ?></span>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             
                             <div class="card-footer">

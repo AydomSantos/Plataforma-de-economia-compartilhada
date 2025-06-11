@@ -1,9 +1,5 @@
 <?php
-
-require_once '../includes/db.php'; // Inclui o arquivo de conexão com o banco de dados
-
-// Inicia a sessão (é importante que session_start() seja chamado no início de cada página que usa sessões)
-session_start();
+require_once __DIR__ . '/../includes/db.php';
 
 // Initialize error variable
 $error = null;
@@ -41,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['user_name'] = $user_name;
 
                 // Redireciona para a página inicial (ou outra página protegida)
-                header("Location: home.php");
+                header("Location: pages/home.php");
                 exit();
             } else {
                 // Senha incorreta
@@ -84,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <h2 class="text-center mb-0 fs-4">Login</h2>
                     </div>
                     <div class="card-body p-4">
-                        <form action="login.php" method="POST">
+                        <form action="../index.php?page=login" method="POST">
                             <div class="mb-3">
                                 <label for="email" class="form-label">E-mail</label>
                                 <input type="email" class="form-control" id="email" name="email" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
@@ -100,10 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <button type="submit" class="btn btn-primary w-100">Entrar</button>
                         </form>
                         <div class="text-center mt-3">
-                            <a href="forgot-password.php" class="text-decoration-none">Esqueceu a senha?</a>
+                            <a href="../index.php?page=forgot_password" class="text-decoration-none">Esqueceu a senha?</a>
                         </div>
                         <div class="text-center mt-3">
-                            <p class="mb-0">Ainda não tem uma conta? <a href="register.php">Registre-se</a></p>
+                            <p class="mb-0">Ainda não tem uma conta? <a href="../index.php?page=register">Registre-se</a></p>
                         </div>
                     </div>
                 </div>

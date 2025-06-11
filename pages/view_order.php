@@ -83,6 +83,11 @@ $has_map = ($order['latitude'] && $order['longitude']);
                         <h2 class="mb-0"><?php echo htmlspecialchars($order['title']); ?></h2>
                     </div>
                     <div class="card-body">
+                        <?php if (!empty($order['product_image'])): ?>
+                            <div class="mb-4 text-center">
+                                <img src="../<?php echo htmlspecialchars($order['product_image']); ?>" alt="Imagem do Produto" style="max-width:300px;max-height:300px;object-fit:contain;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                            </div>
+                        <?php endif; ?>
                         <div class="mb-4">
                             <h5>Descrição:</h5>
                             <p><?php echo nl2br(htmlspecialchars($order['description'])); ?></p>
@@ -100,6 +105,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
                                 <h5>Detalhes:</h5>
                                 <ul class="list-group">
                                     <li class="list-group-item"><strong>Categoria:</strong> <?php echo ucfirst(htmlspecialchars($order['category'])); ?></li>
+                                    <li class="list-group-item"><strong>Status:</strong> <?php echo htmlspecialchars($order['status'] ?? ''); ?></li>
                                     <li class="list-group-item"><strong>Data de Criação:</strong> <?php echo date('d/m/Y H:i', strtotime($order['created_at'])); ?></li>
                                     <?php if ($distance !== null): ?>
                                         <li class="list-group-item"><strong>Distância:</strong> <?php echo number_format($distance, 1); ?> km</li>
