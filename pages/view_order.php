@@ -1,10 +1,11 @@
 <?php
 session_start();
-require_once '../includes/db.php'; // Changed from 'includes/db.php' to '../includes/db.php'
+require_once '../includes/db.php';
+
 
 // Verificar se o ID do pedido foi fornecido
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -20,7 +21,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -35,7 +36,6 @@ if (isset($_SESSION['user_id'])) {
     $user_stmt->bind_param("i", $_SESSION['user_id']);
     $user_stmt->execute();
     $user_result = $user_stmt->get_result();
-    
     if ($user_row = $user_result->fetch_assoc()) {
         $user_lat = $user_row['latitude'];
         $user_lng = $user_row['longitude'];
@@ -59,8 +59,8 @@ $has_map = ($order['latitude'] && $order['longitude']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($order['title']); ?> - Plataforma de Economia Compartilhada</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
     <?php if ($has_map): ?>
     <style>
         #map {
@@ -85,9 +85,10 @@ $has_map = ($order['latitude'] && $order['longitude']);
                     <div class="card-body">
                         <?php if (!empty($order['product_image'])): ?>
                             <div class="mb-4 text-center">
-                                <img src="../<?php echo htmlspecialchars($order['product_image']); ?>" alt="Imagem do Produto" style="max-width:300px;max-height:300px;object-fit:contain;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                                <img src="../uploads/<?php echo htmlspecialchars($order['product_image']); ?>" alt="Imagem do Produto" class="img-fluid" style="max-height: 300px;">
                             </div>
                         <?php endif; ?>
+                        
                         <div class="mb-4">
                             <h5>Descrição:</h5>
                             <p><?php echo nl2br(htmlspecialchars($order['description'])); ?></p>
@@ -105,7 +106,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
                                 <h5>Detalhes:</h5>
                                 <ul class="list-group">
                                     <li class="list-group-item"><strong>Categoria:</strong> <?php echo ucfirst(htmlspecialchars($order['category'])); ?></li>
-                                    <li class="list-group-item"><strong>Status:</strong> <?php echo htmlspecialchars($order['status'] ?? ''); ?></li>
+                                    <li class="list-group-item"><strong>Status:</strong> <?php echo htmlspecialchars($order['status'] ?? 'Ativo'); ?></li>
                                     <li class="list-group-item"><strong>Data de Criação:</strong> <?php echo date('d/m/Y H:i', strtotime($order['created_at'])); ?></li>
                                     <?php if ($distance !== null): ?>
                                         <li class="list-group-item"><strong>Distância:</strong> <?php echo number_format($distance, 1); ?> km</li>
@@ -124,19 +125,17 @@ $has_map = ($order['latitude'] && $order['longitude']);
                             </div>
                         </div>
                         
-                        <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $order['user_id']): ?>
-                            <div class="text-center">
-                                <a href="chat.php?user=<?php echo $order['user_id']; ?>" class="btn btn-success">Entrar em Contato</a>
-                            </div>
-                        <?php elseif (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $order['user_id']): ?>
-                            <div class="text-center">
-                                <a href="edit_order.php?id=<?php echo $order_id; ?>" class="btn btn-warning">Editar Pedido</a>
-                                <a href="delete_order.php?id=<?php echo $order_id; ?>" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este pedido?')">Excluir Pedido</a>
-                            </div>
-                        <?php endif; ?>
+                        <div class="text-center">
+                            <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $order['user_id']): ?>
+                                <a href="../pages/edit_order.php?id=<?php echo $order_id; ?>" class="btn btn-warning me-2">Editar Pedido</a>
+                                <a href="../pages/delete_order.php?id=<?php echo $order_id; ?>" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este pedido?')">Excluir Pedido</a>
+                            <?php elseif (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $order['user_id']): ?>
+                                <a href="../pages/chat.php?user=<?php echo $order['user_id']; ?>" class="btn btn-success me-2">Entrar em Contato</a>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="card-footer">
-                        <a href="index.php" class="btn btn-secondary">Voltar para a Lista</a>
+                        <a href="../index.php" class="btn btn-secondary">Voltar para a Lista</a>
                     </div>
                 </div>
             </div>
@@ -145,9 +144,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
     
     <?php include '../includes/footer.php'; ?>
     
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <?php if ($has_map): ?>
     <!-- Google Maps API -->
@@ -228,7 +225,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
         }
     </script>
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+        src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API&callback=initMap">
     </script>
     <?php endif; ?>
 </body>
