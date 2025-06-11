@@ -97,8 +97,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="forgot_password.php" class="text-blue-500 hover:underline">Esqueceu sua senha?</a>
             </div>
             <div class="text-center mt-4">
+
+                <p class="text-gray-600">Não tem uma conta? <a href="pages/register.php" class="text-blue-500 hover:underline">Registre-se</a></p>
+
                 <p class="text-gray-600">Não tem uma conta? <a href="./pages/register.php" class="text-blue-500 hover:underline">Registre-se</a></p>
-            </div>
+
+           </div>
         </div>
         <div class="text-center mt-4 text-gray-600">
             <p>&copy; 2023 Plataforma de Economia Compartilhada</p>

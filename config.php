@@ -12,7 +12,7 @@ if (session_status() == PHP_SESSION_NONE) {
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'del_teste');
+define('DB_NAME', 'request_system');
 
 // URL configuration
 define('BASE_URL', 'http://localhost/Plataforma-de-economia-compartilhada');

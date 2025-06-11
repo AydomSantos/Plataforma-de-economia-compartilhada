@@ -2,9 +2,6 @@
 
 require_once '../includes/db.php'; // Inclui o arquivo de conexão com o banco de dados
 
-// Inicia a sessão (é importante que session_start() seja chamado no início de cada página que usa sessões)
-session_start();
-
 // Initialize error variable
 $error = null;
 

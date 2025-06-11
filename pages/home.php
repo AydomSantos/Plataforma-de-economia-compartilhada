@@ -77,7 +77,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
     <nav class="bg-blue-600 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex">
+                <div class="flex items-center">
                     <a href="home.php" class="flex-shrink-0 flex items-center text-white font-bold text-xl">
                         Economia Compartilhada
                     </a>
@@ -94,12 +94,13 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                             Chat
                         </a>
                     </div>
-                    <div class="ml-3 relative">
-                        <div class="relative">
-                            <a href="profile.php" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
-                                <img class="h-8 w-8 rounded-full" src="https://ui-avatars.com/api/?name=<?php echo urlencode($user_name ?: $user['name']); ?>&background=random" alt="Avatar">
-                            </a>
-                        </div>
+                    <div class="ml-3 relative flex items-center">
+                        <a href="profile.php" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                            <img class="h-8 w-8 rounded-full" src="https://ui-avatars.com/api/?name=<?php echo urlencode($user_name ?: $user['name']); ?>&background=random" alt="Avatar">
+                        </a>
+                        <a href="logout.php" class="ml-4 text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium bg-red-500 hover:bg-red-600">
+                            Logout
+                        </a>
                     </div>
                 </div>
             </div>

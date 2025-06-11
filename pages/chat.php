@@ -311,6 +311,11 @@ $user_stmt->close();
         <div class="chat-container row">
             <!-- Conversations Sidebar -->
             <div class="conversations-sidebar col-md-4 col-lg-3 p-0">
+                <div class="p-2">
+                    <a href="home.php" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Voltar à Home
+                    </a>
+                </div>
                 <div class="chat-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Conversas</h5>
                     <button class="new-conversation-btn" id="new-conversation-btn">

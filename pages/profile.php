@@ -121,8 +121,11 @@ if ($table_exists) {
                         }
                         ?>
                     </p>
-                    <a href="../edit_profile.php" class="btn btn-outline-primary btn-sm">
+                    <a href="edit_profile.php" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-pencil"></i> Editar Perfil
+                    </a>
+                    <a href="home.php" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Voltar à Home
                     </a>
                 </div>
             </div>
@@ -309,7 +312,7 @@ if ($table_exists) {
                                 <h5 class="mb-0">Conta</h5>
                             </div>
                             <div class="card-body">
-                                <a href="../edit_profile.php" class="btn btn-outline-primary mb-2">
+                                <a href="edit_profile.php" class="btn btn-outline-primary mb-2">
                                     <i class="bi bi-pencil"></i> Editar Perfil
                                 </a>
                                 <a href="../change_password.php" class="btn btn-outline-secondary mb-2">
