@@ -1,6 +1,7 @@
+// content of pages/logout.php
 <?php
-
-session_start();
+// No need for session_start() here if it's already done in index.php (the front controller)
+// But it doesn't hurt to have it for standalone testing of logout.php
 
 // Destrói todas as variáveis de sessão
 $_SESSION = array();
@@ -17,8 +18,7 @@ if (ini_get("session.use_cookies")) {
 // Finalmente, destrói a sessão
 session_destroy();
 
-// Redireciona o usuário para a página de login
-header("Location: login.php");
+header("Location: index.php?page=login");
 exit();
 
 ?>

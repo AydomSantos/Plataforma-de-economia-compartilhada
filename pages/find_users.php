@@ -1,6 +1,6 @@
 
 <?php
-session_start();
+
 require_once '../includes/db.php';
 
 // Verificar autenticação e parâmetro de busca
