@@ -1,6 +1,5 @@
 <?php
-session_start();
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 // Verificar se o usuário está logado
 if (!isset($_SESSION['user_id'])) {
@@ -97,14 +96,17 @@ if ($table_exists) {
     </style>
 </head>
 <body>
-    <?php include '../includes/header.php'; ?>
     
     <div class="container py-4">
         <!-- Profile Header -->
         <div class="profile-header shadow-sm">
             <div class="d-flex align-items-center">
-                <div class="profile-avatar">
-                    <i class="bi bi-person"></i>
+                <div class="profile-avatar overflow-hidden bg-light d-flex align-items-center justify-content-center" style="position:relative;">
+                    <?php if (!empty($user['profile_photo'])): ?>
+                        <img src="../<?php echo htmlspecialchars($user['profile_photo']); ?>" alt="Foto de Perfil" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                    <?php else: ?>
+                        <i class="bi bi-person"></i>
+                    <?php endif; ?>
                 </div>
                 <div>
                     <h1 class="mb-1"><?php echo htmlspecialchars($user['name']); ?></h1>
@@ -114,18 +116,15 @@ if ($table_exists) {
                     <p class="text-muted mb-2">
                         <i class="bi bi-geo-alt"></i> 
                         <?php 
-                        if ($user['latitude'] && $user['longitude']) {
+                        if (!empty($user['latitude']) && !empty($user['longitude'])) {
                             echo 'Localização configurada';
                         } else {
                             echo 'Localização não configurada';
                         }
                         ?>
                     </p>
-                    <a href="edit_profile.php" class="btn btn-outline-primary btn-sm">
+                    <a href="../index.php?page=edit_profile" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-pencil"></i> Editar Perfil
-                    </a>
-                    <a href="home.php" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-arrow-left"></i> Voltar à Home
                     </a>
                 </div>
             </div>
@@ -197,7 +196,8 @@ if ($table_exists) {
                     <div class="tab-pane fade show active" id="v-pills-orders">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h3>Meus Pedidos</h3>
-                            <a href="create_order.php" class="btn btn-primary">
+                            <!-- Botão de novo pedido -->
+                            <a href="../index.php?page=create_order" class="btn btn-primary">
                                 <i class="bi bi-plus-circle"></i> Novo Pedido
                             </a>
                         </div>
@@ -222,11 +222,12 @@ if ($table_exists) {
                                     </div>
                                     <div class="card-footer bg-white">
                                         <div class="d-flex justify-content-between">
-                                            <a href="../view_order.php?id=<?php echo $order['id']; ?>" class="btn btn-outline-primary btn-sm">
+                                            <!-- Botões de ações nos pedidos -->
+                                            <a href="../index.php?page=view_order&id=<?php echo $order['id']; ?>" class="btn btn-outline-primary btn-sm">
                                                 <i class="bi bi-eye"></i> Ver Detalhes
                                             </a>
                                             <div>
-                                                <a href="../edit_order.php?id=<?php echo $order['id']; ?>" class="btn btn-outline-secondary btn-sm">
+                                                <a href="../index.php?page=edit_order&id=<?php echo $order['id']; ?>" class="btn btn-outline-secondary btn-sm">
                                                     <i class="bi bi-pencil"></i> Editar
                                                 </a>
                                                 <button type="button" class="btn btn-outline-danger btn-sm" 
@@ -268,7 +269,8 @@ if ($table_exists) {
                                         <p class="card-text"><?php echo nl2br(htmlspecialchars($response['message'])); ?></p>
                                     </div>
                                     <div class="card-footer bg-white">
-                                        <a href="../view_order.php?id=<?php echo $response['order_id']; ?>" class="btn btn-outline-primary btn-sm">
+                                        <!-- Botão de ver pedido nas respostas -->
+                                        <a href="../index.php?page=view_order&id=<?php echo $response['order_id']; ?>" class="btn btn-outline-primary btn-sm">
                                             <i class="bi bi-eye"></i> Ver Pedido
                                         </a>
                                     </div>
@@ -287,12 +289,12 @@ if ($table_exists) {
                             </div>
                             <div class="card-body">
                                 <p>Sua localização atual:</p>
-                                <?php if ($user['latitude'] && $user['longitude']): ?>
+                                <?php if (!empty($user['latitude']) && !empty($user['longitude'])): ?>
                                     <div class="alert alert-success">
                                         <i class="bi bi-geo-alt-fill"></i> Localização configurada
                                         <p class="mb-0 mt-2">
-                                            <small>Latitude: <?php echo $user['latitude']; ?></small><br>
-                                            <small>Longitude: <?php echo $user['longitude']; ?></small>
+                                            <small>Latitude: <?php echo htmlspecialchars($user['latitude']); ?></small><br>
+                                            <small>Longitude: <?php echo htmlspecialchars($user['longitude']); ?></small>
                                         </p>
                                     </div>
                                 <?php else: ?>
@@ -312,10 +314,11 @@ if ($table_exists) {
                                 <h5 class="mb-0">Conta</h5>
                             </div>
                             <div class="card-body">
-                                <a href="edit_profile.php" class="btn btn-outline-primary mb-2">
+                                <!-- Configurações -->
+                                <a href="../index.php?page=edit_profile" class="btn btn-outline-primary mb-2">
                                     <i class="bi bi-pencil"></i> Editar Perfil
                                 </a>
-                                <a href="../change_password.php" class="btn btn-outline-secondary mb-2">
+                                <a href="../index.php?page=change_password" class="btn btn-outline-secondary mb-2">
                                     <i class="bi bi-key"></i> Alterar Senha
                                 </a>
                                 <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
@@ -381,27 +384,25 @@ if ($table_exists) {
         </div>
     </div>
     
-    <?php include '../includes/footer.php'; ?>
-    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Função para confirmar exclusão de pedido
         function confirmDelete(orderId) {
             const modal = new bootstrap.Modal(document.getElementById('deleteOrderModal'));
-            document.getElementById('confirmDeleteBtn').href = '../delete_order.php?id=' + orderId;
+            document.getElementById('confirmDeleteBtn').href = '../index.php?page=delete_order&id=' + orderId;
             modal.show();
         }
         
-        // Script para atualizar a localização do usuário
+        // Atualizar localização
         document.getElementById('update-location-btn')?.addEventListener('click', function() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
-                    
+
                     // Enviar para o servidor via AJAX
                     const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '../update_location.php', true);
+                    xhr.open('POST', '../index.php?page=update_location', true);
                     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                     xhr.onload = function() {
                         if (this.status === 200) {
@@ -419,7 +420,7 @@ if ($table_exists) {
                 alert('Geolocalização não é suportada pelo seu navegador.');
             }
         });
-        
+
         // Confirmar exclusão de conta
         document.getElementById('confirmDeleteAccountBtn')?.addEventListener('click', function() {
             const password = document.getElementById('confirmPassword').value;
@@ -427,10 +428,10 @@ if ($table_exists) {
                 alert('Por favor, digite sua senha para confirmar a exclusão da conta.');
                 return;
             }
-            
+
             // Enviar para o servidor via AJAX
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', '../delete_account.php', true);
+            xhr.open('POST', '../index.php?page=delete_account', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.onload = function() {
                 if (this.status === 200) {
@@ -447,5 +448,7 @@ if ($table_exists) {
             xhr.send(`password=${encodeURIComponent(password)}`);
         });
     </script>
+    
+    <?php include __DIR__ . '/../includes/footer.php'; ?>
 </body>
 </html>

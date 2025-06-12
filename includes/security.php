@@ -1,5 +1,6 @@
 
 <?php
+session_start();
 
 // Função para gerar token CSRF
 function generate_csrf_token() {

@@ -1,22 +1,17 @@
 <?php
-session_start();
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php'; // Garante $conn disponível
+if (session_status() == PHP_SESSION_NONE) session_start(); // Garante $_SESSION disponível
 
-// Verifica se a variável de sessão user_id está definida. Se não estiver,
-// significa que o usuário não está logado, então redireciona para a página de login.
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
-    exit();
-}
-
-// Se a execução chegar até aqui, significa que o usuário está logado.
-// Podemos então exibir o conteúdo da página inicial.
+// A sessão já foi iniciada e a conexão $conn já está disponível,
+// e o usuário já foi verificado como logado pelo index.php principal.
 
 // Obter informações do usuário da sessão
 $user_id = $_SESSION['user_id'];
 $user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
 
+
 // Obter informações adicionais do usuário do banco de dados
+// Use $conn que foi definido no index.php
 $user_query = "SELECT * FROM users WHERE id = ?";
 $user_stmt = $conn->prepare($user_query);
 $user_stmt->bind_param("i", $user_id);
@@ -27,7 +22,7 @@ $user_stmt->close();
 
 // Obter pedidos recentes
 $recent_orders_query = "SELECT o.*, u.name FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC LIMIT 3";
-$recent_orders_result = $conn->query($recent_orders_query);
+$recent_orders_result = $conn->query($recent_orders_query); // Use $conn
 $recent_orders = [];
 if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
     while ($row = $recent_orders_result->fetch_assoc()) {
@@ -73,33 +68,34 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
-    <!-- Navigation Bar -->
     <nav class="bg-blue-600 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="home.php" class="flex-shrink-0 flex items-center text-white font-bold text-xl">
+                <div class="flex">
+                    <a href="index.php?page=home" class="flex-shrink-0 flex items-center text-white font-bold text-xl">
                         Economia Compartilhada
                     </a>
                 </div>
                 <div class="flex items-center">
                     <div class="hidden md:ml-6 md:flex md:space-x-8">
-                        <a href="explore_orders.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="http://localhost/index.php?page=explore_orders" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
                             Explorar Pedidos
                         </a>
-                        <a href="create_order.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="http://localhost/index.php?page=create_order" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
                             Criar Pedido
                         </a>
-                        <a href="chat.php" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
+                        <a href="http://localhost/index.php?page=chat" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
                             Chat
                         </a>
                     </div>
                     <div class="ml-3 relative flex items-center">
-                        <a href="profile.php" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
-                            <img class="h-8 w-8 rounded-full" src="https://ui-avatars.com/api/?name=<?php echo urlencode($user_name ?: $user['name']); ?>&background=random" alt="Avatar">
-                        </a>
-                        <a href="logout.php" class="ml-4 text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium bg-red-500 hover:bg-red-600">
-                            Logout
+                        <div class="relative">
+                            <a href="http://localhost/index.php?page=profile" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                                <img class="h-8 w-8 rounded-full" src="https://ui-avatars.com/api/?name=<?php echo urlencode($user_name ?: $user['name']); ?>&background=random" alt="Avatar">
+                            </a>
+                        </div>
+                        <a href="http://localhost/index.php?page=logout" class="ml-4 px-3 py-2 rounded-md text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors">
+                            Sair
                         </a>
                     </div>
                 </div>
@@ -107,9 +103,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
         </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow">
-        <!-- Welcome Section -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
             <h2 class="text-2xl font-bold text-gray-900">
                 Bem-vindo, <?php echo htmlspecialchars($user_name ?: $user['name']); ?>!
@@ -125,9 +119,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
             <?php endif; ?>
         </div>
 
-        <!-- Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            <!-- Explore Card -->
             <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
                 <div class="p-6">
                     <div class="flex items-center">
@@ -143,7 +135,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                                 </dt>
                                 <dd>
                                     <div class="text-lg font-medium text-gray-900">
-                                        Explorar
+                                      <a href="http://localhost/index.php?page=explore_orders">Explorar</a>  
                                     </div>
                                 </dd>
                             </dl>
@@ -152,7 +144,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                 </div>
                 <div class="bg-gray-50 px-6 py-4">
                     <div class="text-sm">
-                        <a href="explore_orders.php" class="font-medium text-blue-600 hover:text-blue-900 flex items-center">
+                        <a href="http://localhost/index.php?page=explore_orders" class="font-medium text-blue-600 hover:text-blue-900 flex items-center">
                             Ver todos
                             <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -162,7 +154,6 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                 </div>
             </div>
             
-            <!-- Create Card -->
             <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
                 <div class="p-6">
                     <div class="flex items-center">
@@ -187,7 +178,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                 </div>
                 <div class="bg-gray-50 px-6 py-4">
                     <div class="text-sm">
-                        <a href="create_order.php" class="font-medium text-green-600 hover:text-green-900 flex items-center">
+                        <a href="http://localhost/index.php?page=create_order" class="font-medium text-green-600 hover:text-green-900 flex items-center">
                             Criar
                             <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -197,7 +188,6 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                 </div>
             </div>
             
-            <!-- Profile Card -->
             <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
                 <div class="p-6">
                     <div class="flex items-center">
@@ -222,7 +212,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                 </div>
                 <div class="bg-gray-50 px-6 py-4">
                     <div class="text-sm">
-                        <a href="profile.php" class="font-medium text-indigo-600 hover:text-indigo-900 flex items-center">
+                        <a href="http://localhost/index.php?page=profile" class="font-medium text-indigo-600 hover:text-indigo-900 flex items-center">
                             Ver
                             <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -233,7 +223,6 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
             </div>
         </div>
 
-        <!-- Recent Activity -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
             <h5 class="mb-4 text-xl font-bold text-gray-900">Pedidos Recentes</h5>
             <div class="space-y-3">
@@ -243,7 +232,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                     </div>
                 <?php else: ?>
                     <?php foreach ($recent_orders as $order): ?>
-                        <a href="view_order.php?id=<?php echo $order['id']; ?>" class="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <a href="http://localhost/index.php?page=view_order&id=<?php echo $order['id']; ?>" class="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                             <div class="flex justify-between items-start">
                                 <h6 class="font-semibold text-gray-900"><?php echo htmlspecialchars($order['title']); ?></h6>
                                 <small class="text-gray-500 ml-2">
@@ -274,7 +263,6 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -285,9 +273,9 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                 <div>
                     <h5 class="text-lg font-bold mb-4">Links</h5>
                     <ul class="space-y-2">
-                        <li><a href="about.php" class="text-gray-300 hover:text-white transition-colors">Sobre nós</a></li>
-                        <li><a href="terms.php" class="text-gray-300 hover:text-white transition-colors">Termos de uso</a></li>
-                        <li><a href="privacy.php" class="text-gray-300 hover:text-white transition-colors">Política de privacidade</a></li>
+                        <li><a href="http://localhost/index.php?page=about" class="text-gray-300 hover:text-white transition-colors">Sobre nós</a></li>
+                        <li><a href="http://localhost/index.php?page=terms" class="text-gray-300 hover:text-white transition-colors">Termos de uso</a></li>
+                        <li><a href="http://localhost/index.php?page=privacy" class="text-gray-300 hover:text-white transition-colors">Política de privacidade</a></li>
                     </ul>
                 </div>
                 <div>
@@ -317,9 +305,9 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
                     
-                    // Enviar para o servidor via AJAX
+                    // Enviar para o servidor via AJAX usando o roteador
                     const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '../update_location.php', true);
+                    xhr.open('POST', 'index.php?page=update_location', true);
                     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                     xhr.onload = function() {
                         if (this.status === 200) {
