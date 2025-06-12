@@ -1,5 +1,9 @@
 <?php
 
+// Since this file (register.php) is now included by index.php (your front controller),
+// session_start() is already called in index.php, so you don't need it here.
+// session_start(); 
+
 require_once __DIR__ . '/../includes/db.php'; 
 
 // Initialize error variable
@@ -19,14 +23,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $ext = pathinfo($_FILES['profile_photo']['name'], PATHINFO_EXTENSION);
         $allowed = ['jpg', 'jpeg', 'png', 'gif'];
         if (in_array(strtolower($ext), $allowed)) {
-            $upload_dir = __DIR__ . '/../uploads/';
+            // Adjust upload_dir to be relative to the project root, not the current file
+            // If this file is in 'pages/', and 'uploads/' is in the project root,
+            // then '/uploads/' from the project root is correct.
+            // If it's relative to the current script, it might be '../uploads/'
+            $upload_dir = __DIR__ . '/../uploads/'; // Assuming 'uploads' is parallel to 'pages'
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
             $filename = uniqid('profile_', true) . '.' . $ext;
             $dest = $upload_dir . $filename;
             if (move_uploaded_file($_FILES['profile_photo']['tmp_name'], $dest)) {
-                $profile_photo = 'uploads/' . $filename;
+                // Store the path relative to the web accessible directory
+                $profile_photo = 'uploads/' . $filename; // This is the path to save in the DB
             } else {
                 $error = "Erro ao fazer upload da foto.";
             }
@@ -71,7 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Executa a query
             if ($stmt->execute()) {
                 // Registro bem-sucedido, redireciona para a página de login
-                header("Location: login.php?registration_success=1");
+                // CORRECTED REDIRECT: Use the front controller for redirection
+                header("Location: index.php?page=login&registration_success=1");
                 exit();
             } else {
                 $error = "Erro ao registrar o usuário. Por favor, tente novamente.";
@@ -81,7 +91,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->close();
     }
 
-    $conn->close();
+    // Close the connection here if you are sure no more DB operations will occur
+    // in the same request after potential error handling, but it's often safer
+    // to let the script finish or close it in a common shutdown routine.
+    // For now, leaving it as is.
+    // $conn->close(); // This line might be problematic if index.php uses $conn later.
 }
 ?>
 <!DOCTYPE html>
@@ -90,9 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body class="bg-light">
@@ -110,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <h2 class="mb-0 fs-4">Registro</h2>
                     </div>
                     <div class="card-body p-4">
-                        <form action="register.php" method="POST" enctype="multipart/form-data">
+                        <form action="index.php?page=register" method="POST" enctype="multipart/form-data">
                             <div class="mb-3">
                                 <label for="name" class="form-label">Nome:</label>
                                 <input type="text" class="form-control" id="name" name="name" value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>" required>
@@ -135,14 +147,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </form>
                     </div>
                     <div class="card-footer text-center">
-                        <p class="mb-0">Já tem uma conta? <a href="./login.php">Faça login</a></p>
+                        <p class="mb-0">Já tem uma conta? <a href="http://localhost/index.php?page=login">Faça login</a></p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

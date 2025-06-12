@@ -1,31 +1,29 @@
-
 <?php
-// Check if session is already active before trying to modify settings
+// Configurações de sessão seguras
 if (session_status() == PHP_SESSION_NONE) {
-    // Session security settings
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
     session_start();
 }
 
-// Database configuration
+// Configurações do banco de dados
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'del_teste');
 
-// URL configuration
-define('BASE_URL', 'http://localhost/Plataforma-de-economia-compartilhada');
+// URL base do projeto
+$URL_BASE = "http://localhost/Plataforma-de-economia-compartilhada";
 
-// Timezone settings
+// Configuração de timezone
 date_default_timezone_set('America/Sao_Paulo');
 
-// Error display settings (disable in production)
+// Exibir erros (desative em produção)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Global utility functions
+// Função utilitária global para redirecionamento
 function redirect($url) {
     header("Location: $url");
     exit;

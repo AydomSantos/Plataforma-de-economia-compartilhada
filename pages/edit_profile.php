@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once __DIR__ . '/../includes/db.php';
 
 // Verificar se o usuário está logado

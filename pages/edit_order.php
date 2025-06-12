@@ -1,6 +1,5 @@
 <?php
-session_start();
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 // Verifica se o usuário está logado e é o dono do pedido
 if (!isset($_SESSION['user_id'])) {
@@ -76,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" class="form-control" id="status" name="status" value="<?php echo htmlspecialchars($order['status'] ?? ''); ?>" required>
         </div>
         <button type="submit" class="btn btn-primary">Salvar</button>
-        <a href="view_order.php?id=<?php echo $order_id; ?>" class="btn btn-secondary">Cancelar</a>
+        <a href="http://localhost/index.php?page=view_order&id=<?php echo $order_id; ?>" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
 </body>

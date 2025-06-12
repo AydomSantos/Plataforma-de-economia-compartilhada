@@ -1,15 +1,12 @@
 <?php
-session_start();
-require_once '../includes/db.php';
 
+$order_id = $_GET['id'] ?? 0; 
 
-// Verificar se o ID do pedido foi fornecido
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header('Location: ../index.php');
-    exit;
+if (!$order_id) {
+    // Redireciona para uma página de exploração de pedidos ou home se não houver ID válido
+    header("Location: index.php?page=explore_orders");
+    exit();
 }
-
-$order_id = $_GET['id'];
 
 // Obter os detalhes do pedido
 $stmt = $conn->prepare("SELECT o.*, u.name, u.email, u.latitude, u.longitude 
@@ -21,7 +18,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    header('Location: ../index.php');
+    header('Location: index.php?page=explore_orders'); // Ou index.php?page=error_404
     exit;
 }
 
@@ -43,6 +40,31 @@ if (isset($_SESSION['user_id'])) {
     $user_stmt->close();
 }
 
+// Função para calcular distância (certifique-se de que esta função está em um arquivo incluído globalmente, como db.php ou functions.php, ou defina-a aqui)
+if (!function_exists('calculateDistance')) {
+    function calculateDistance($lat1, $lon1, $lat2, $lon2, $unit = 'km') {
+        if (($lat1 == $lat2) && ($lon1 == $lon2)) {
+            return 0;
+        }
+        else {
+            $theta = $lon1 - $lon2;
+            $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+            $dist = acos($dist);
+            $dist = rad2deg($dist);
+            $miles = $dist * 60 * 1.1515;
+            $unit = strtolower($unit);
+            if ($unit == "km") {
+                return ($miles * 1.609344);
+            } else if ($unit == "nmi") {
+                return ($miles * 0.8684);
+            } else {
+                return $miles;
+            }
+        }
+    }
+}
+
+
 // Calcular a distância se o usuário estiver logado e tiver localização
 $distance = null;
 if ($user_lat && $user_lng && $order['latitude'] && $order['longitude']) {
@@ -60,7 +82,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($order['title']); ?> - Plataforma de Economia Compartilhada</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css"> 
     <?php if ($has_map): ?>
     <style>
         #map {
@@ -73,7 +95,11 @@ $has_map = ($order['latitude'] && $order['longitude']);
     <?php endif; ?>
 </head>
 <body>
-    <?php include '../includes/header.php'; ?>
+    <?php 
+    // Incluir o header global, que deve estar no index.php, ou manter o caminho se for local
+    // Se você não o está incluindo no index.php, então o caminho aqui está correto para pages/
+    // include '../includes/header.php'; 
+    ?>
     
     <div class="container mt-5">
         <div class="row">
@@ -85,7 +111,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
                     <div class="card-body">
                         <?php if (!empty($order['product_image'])): ?>
                             <div class="mb-4 text-center">
-                                <img src="../uploads/<?php echo htmlspecialchars($order['product_image']); ?>" alt="Imagem do Produto" class="img-fluid" style="max-height: 300px;">
+                                <img src="uploads/<?php echo htmlspecialchars($order['product_image']); ?>" alt="Imagem do Produto" class="img-fluid" style="max-height: 300px;">
                             </div>
                         <?php endif; ?>
                         
@@ -127,27 +153,25 @@ $has_map = ($order['latitude'] && $order['longitude']);
                         
                         <div class="text-center">
                             <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $order['user_id']): ?>
-                                <a href="../pages/edit_order.php?id=<?php echo $order_id; ?>" class="btn btn-warning me-2">Editar Pedido</a>
-                                <a href="../pages/delete_order.php?id=<?php echo $order_id; ?>" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este pedido?')">Excluir Pedido</a>
+                                <a href="index.php?page=edit_order&id=<?php echo $order_id; ?>" class="btn btn-warning me-2">Editar Pedido</a>
+                                <a href="index.php?page=delete_order&id=<?php echo $order_id; ?>" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este pedido?')">Excluir Pedido</a>
                             <?php elseif (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $order['user_id']): ?>
-                                <a href="../pages/chat.php?user=<?php echo $order['user_id']; ?>" class="btn btn-success me-2">Entrar em Contato</a>
+                                <a href="index.php?page=chat&user=<?php echo $order['user_id']; ?>" class="btn btn-success me-2">Entrar em Contato</a>
                             <?php endif; ?>
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="../index.php" class="btn btn-secondary">Voltar para a Lista</a>
+                        <a href="index.php?page=explore_orders" class="btn btn-secondary">Voltar para a Lista</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <?php include '../includes/footer.php'; ?>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <?php if ($has_map): ?>
-    <!-- Google Maps API -->
     <script>
         function initMap() {
             // Coordenadas do pedido
@@ -168,7 +192,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
                 map: map,
                 title: "<?php echo htmlspecialchars($order['title']); ?>",
                 icon: {
-                    url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                    url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" // Ícone padrão do Google Maps
                 }
             });
             
@@ -181,7 +205,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
                 orderInfoWindow.open(map, orderMarker);
             });
             
-            <?php if ($user_lat && $user_lng && $_SESSION['user_id'] != $order['user_id']): ?>
+            <?php if ($user_lat && $user_lng && isset($_SESSION['user_id']) && $_SESSION['user_id'] != $order['user_id']): ?>
             // Adicionar marcador para a localização do usuário atual
             const userLocation = {
                 lat: <?php echo $user_lat; ?>,
@@ -193,7 +217,7 @@ $has_map = ($order['latitude'] && $order['longitude']);
                 map: map,
                 title: "Sua localização",
                 icon: {
-                    url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" // Ícone padrão do Google Maps
                 }
             });
             

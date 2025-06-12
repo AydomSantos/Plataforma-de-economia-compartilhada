@@ -1,6 +1,6 @@
 <?php
-session_start();
-require_once '../includes/db.php';
+
+require_once __DIR__ . '/../includes/db.php';
 
 // Verificar se o usuário está logado
 if (!isset($_SESSION['user_id'])) {
@@ -98,17 +98,6 @@ if ($categories_result) {
 </head>
 <body>
     <!-- Header simples (substituindo o include) -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="home.php">Economia Compartilhada</a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="home.php">Home</a>
-                <a class="nav-link" href="explore_orders.php">Explorar</a>
-                <a class="nav-link" href="profile.php">Perfil</a>
-                <a class="nav-link" href="logout.php">Sair</a>
-            </div>
-        </div>
-    </nav>
 
     <div class="container mt-4">
         <!-- Formulário de filtros -->

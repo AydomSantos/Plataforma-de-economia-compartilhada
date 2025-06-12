@@ -1,12 +1,5 @@
 <?php
-session_start();
 require_once __DIR__ . '/../includes/db.php';
-
-// Verifica se o usuário está logado
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../index.php?page=login');
-    exit;
-}
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
