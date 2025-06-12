@@ -307,7 +307,7 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
                     
                     // Enviar para o servidor via AJAX usando o roteador
                     const xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'index.php?page=update_location', true);
+                    xhr.open('POST', 'http://localhost/index.php?page=update_location', true);
                     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                     xhr.onload = function() {
                         if (this.status === 200) {

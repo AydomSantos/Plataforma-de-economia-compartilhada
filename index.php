@@ -40,7 +40,10 @@ $pages = [
     'register' => 'pages/register.php',
     'login' => 'pages/login.php', 
     'logout' => 'pages/logout.php', 
-    'update_location' => 'pages/update_location.php'
+    'update_location' => 'pages/update_location.php',
+    'find_users' => 'pages/find_users.php',      
+    'send_message' => 'pages/send_message.php',  
+    'get_messages' => 'pages/get_messages.php',
 ];
 
 // Inclui a página solicitada

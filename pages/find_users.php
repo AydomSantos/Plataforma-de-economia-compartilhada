@@ -1,7 +1,7 @@
 
 <?php
 
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 // Verificar autenticação e parâmetro de busca
 if (!isset($_SESSION['user_id']) || !isset($_GET['search'])) {

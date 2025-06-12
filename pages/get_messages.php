@@ -1,34 +1,77 @@
-
 <?php
 
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php'; 
 
-if (!isset($_SESSION['user_id']) || !isset($_GET['user_id'])) {
-    http_response_code(401);
+
+header('Content-Type: application/json');
+
+// Inicializa o array de resposta.
+$response = ['success' => false, 'messages' => [], 'message' => ''];
+
+// Verificar se o usuário está logado
+if (!isset($_SESSION['user_id'])) {
+    $response['message'] = 'Usuário não autenticado.';
+    echo json_encode($response);
+    exit; // Importante para parar a execução e enviar o JSON.
+}
+
+$current_user_id = $_SESSION['user_id'];
+
+// Verificar se o ID do usuário para chat foi fornecido e é numérico
+if (isset($_GET['user']) && is_numeric($_GET['user'])) {
+    $chat_user_id = $_GET['user'];
+} else {
+    $response['message'] = 'ID do usuário do chat não fornecido ou inválido.';
+    echo json_encode($response);
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
-$other_user_id = $_GET['user_id'];
+$last_message_timestamp = isset($_GET['since']) && is_string($_GET['since']) && !empty($_GET['since'])
+                          ? $_GET['since']
+                          : '1970-01-01 00:00:00'; 
 
-// Get user name
-$name_query = "SELECT name FROM users WHERE id = ?";
-$stmt = $conn->prepare($name_query);
-$stmt->bind_param("i", $other_user_id);
-$stmt->execute();
-$user_name = $stmt->get_result()->fetch_assoc()['name'];
+try {
+    // Consulta para buscar mensagens mais recentes que o timestamp fornecido
+    $messages_query = "
+        SELECT m.*, u.name as sender_name, u.profile_photo as sender_photo
+        FROM messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE ((m.sender_id = ? AND m.receiver_id = ?)
+            OR (m.sender_id = ? AND m.receiver_id = ?))
+            AND m.sent_at > ?
+        ORDER BY m.sent_at ASC";
 
-// Get messages
-$messages_query = "SELECT id, sender_id, content, sent_at 
-                  FROM messages 
-                  WHERE (sender_id = ? AND receiver_id = ?)
-                  OR (sender_id = ? AND receiver_id = ?)
-                  ORDER BY sent_at ASC";
+    $stmt = $conn->prepare($messages_query);
 
-$stmt = $conn->prepare($messages_query);
-$stmt->bind_param("iiii", $user_id, $other_user_id, $other_user_id, $user_id);
-$stmt->execute();
-$messages = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    if (!$stmt) {
+        // Loga o erro para depuração em produção, não exibe ao usuário.
+        error_log("Erro na preparação da consulta em get_messages.php: " . $conn->error);
+        $response['message'] = 'Erro interno do servidor ao preparar a busca por mensagens.';
+        echo json_encode($response);
+        exit;
+    }
 
-echo json_encode(['user_name' => $user_name, 'messages' => $messages]);
-?>
+    $stmt->bind_param("iiiis", $current_user_id, $chat_user_id, $chat_user_id, $current_user_id, $last_message_timestamp);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $messages = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $messages[] = $row;
+        }
+    }
+    $stmt->close();
+
+    $response['success'] = true;
+    $response['messages'] = $messages;
+
+} catch (Exception $e) {
+    error_log("Erro na busca de mensagens em get_messages.php: " . $e->getMessage());
+    $response['message'] = 'Erro ao buscar mensagens: ' . $e->getMessage(); 
+}
+
+// Envia a resposta JSON de volta ao cliente.
+echo json_encode($response);
+exit; 
+
