@@ -21,14 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!isset($error)) {
         // Busca o usuário no banco de dados pelo e-mail
         $stmt = $conn->prepare("SELECT id, name, password FROM users WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $stmt->store_result();
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
 
-        if ($stmt->num_rows == 1) {
+        if ($user) {
             // O e-mail foi encontrado, agora verifica a senha
-            $stmt->bind_result($user_id, $user_name, $hashed_password);
-            $stmt->fetch();
+            $user_id = $user['id'];
+            $user_name = $user['name'];
+            $hashed_password = $user['password'];
 
             // Verifica se a senha fornecida corresponde ao hash no banco de dados
             if (password_verify($password, $hashed_password)) {
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['user_name'] = $user_name;
 
                 // Redireciona para a página inicial (ou outra página protegida)
-                header("Location: pages/home.php");
+                header("Location: index.php?page=home");
                 exit();
             } else {
                 // Senha incorreta
@@ -47,11 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Usuário não encontrado
             $error = "E-mail não encontrado.";
         }
-
-        $stmt->close();
     }
-
-    $conn->close();
 }
 ?>
 

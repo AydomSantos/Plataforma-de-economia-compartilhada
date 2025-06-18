@@ -22,6 +22,7 @@ if ($auth_required && !isset($_SESSION['user_id'])) {
 $pages = [
     'home' => 'pages/home.php',
     'explore_orders' => 'pages/explore_orders.php',
+    'explore_services' => 'pages/explore_services.php',
     'create_order' => 'pages/create_order.php',
     'view_order' => 'pages/view_order.php',
     'profile' => 'pages/profile.php',

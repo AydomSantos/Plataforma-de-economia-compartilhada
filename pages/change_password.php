@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <button type="submit" class="btn btn-primary">
                                     <i class="bi bi-save"></i> Alterar Senha
                                 </button>
-                                <a href="../index.php?page=profile" class="btn btn-secondary">
+                                <a href="index.php?page=profile" class="btn btn-secondary">
                                     <i class="bi bi-arrow-left"></i> Voltar ao Perfil
                                 </a>
                             </div>

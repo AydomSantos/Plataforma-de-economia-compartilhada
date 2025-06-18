@@ -1,5 +1,6 @@
+
 <?php
-require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 // Verificar se o usuário está logado
 if (!isset($_SESSION['user_id'])) {
@@ -26,17 +27,18 @@ if (!is_numeric($latitude) || !is_numeric($longitude)) {
     exit;
 }
 
-// Atualizar a localização do usuário no banco de dados
-$stmt = $conn->prepare("UPDATE users SET latitude = ?, longitude = ? WHERE id = ?");
-$stmt->bind_param("ddi", $latitude, $longitude, $user_id);
-
-if ($stmt->execute()) {
-    echo "Localização atualizada com sucesso";
-} else {
+try {
+    // Atualizar a localização do usuário no banco de dados
+    $stmt = $conn->prepare("UPDATE users SET latitude = ?, longitude = ? WHERE id = ?");
+    
+    if ($stmt->execute([$latitude, $longitude, $user_id])) {
+        echo "Localização atualizada com sucesso";
+    } else {
+        http_response_code(500);
+        echo "Erro ao atualizar localização";
+    }
+} catch (PDOException $e) {
     http_response_code(500);
-    echo "Erro ao atualizar localização: " . $stmt->error;
+    echo "Erro ao atualizar localização: " . $e->getMessage();
 }
-
-$stmt->close();
-$conn->close();
 ?>

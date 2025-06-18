@@ -63,32 +63,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!isset($error)) {
         // Verifica se o e-mail já existe no banco de dados
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $stmt->store_result();
+        $stmt->execute([$email]);
 
-        if ($stmt->num_rows > 0) {
+        if ($stmt->fetch()) {
             $error = "Este e-mail já está cadastrado.";
         } else {
             // Hash da senha antes de salvar no banco de dados
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-            // Prepara a query para inserir o novo usuário (agora inclui profile_photo)
-            $stmt = $conn->prepare("INSERT INTO users (name, email, password, profile_photo) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("ssss", $name, $email, $hashed_password, $profile_photo);
+            // Prepara a query para inserir o novo usuário (agora inclui profile_picture)
+            $stmt = $conn->prepare("INSERT INTO users (name, email, password, profile_picture) VALUES (?, ?, ?, ?)");
 
             // Executa a query
-            if ($stmt->execute()) {
+            if ($stmt->execute([$name, $email, $hashed_password, $profile_photo])) {
                 // Registro bem-sucedido, redireciona para a página de login
-                // CORRECTED REDIRECT: Use the front controller for redirection
                 header("Location: index.php?page=login&registration_success=1");
                 exit();
             } else {
                 $error = "Erro ao registrar o usuário. Por favor, tente novamente.";
             }
         }
-
-        $stmt->close();
     }
 
     // Close the connection here if you are sure no more DB operations will occur

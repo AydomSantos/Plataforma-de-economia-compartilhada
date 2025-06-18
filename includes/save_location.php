@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 require_once 'db.php';
@@ -24,14 +25,16 @@ if (!is_numeric($latitude) || !is_numeric($longitude)) {
     exit;
 }
 
-// Atualizar a localização do usuário no banco de dados
-$stmt = $conn->prepare("UPDATE users SET latitude = ?, longitude = ? WHERE id = ?");
-$stmt->bind_param("ddi", $latitude, $longitude, $user_id);
-
-if ($stmt->execute()) {
-    echo json_encode(['success' => true, 'message' => 'Localização atualizada com sucesso']);
-} else {
-    echo json_encode(['success' => false, 'message' => 'Erro ao atualizar localização: ' . $stmt->error]);
+try {
+    // Atualizar a localização do usuário no banco de dados
+    $stmt = $conn->prepare("UPDATE users SET latitude = ?, longitude = ? WHERE id = ?");
+    
+    if ($stmt->execute([$latitude, $longitude, $user_id])) {
+        echo json_encode(['success' => true, 'message' => 'Localização atualizada com sucesso']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Erro ao atualizar localização']);
+    }
+} catch (PDOException $e) {
+    echo json_encode(['success' => false, 'message' => 'Erro ao atualizar localização: ' . $e->getMessage()]);
 }
-
-$stmt->close();
+?>

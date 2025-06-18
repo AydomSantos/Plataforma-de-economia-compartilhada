@@ -6,11 +6,8 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Configurações do banco de dados
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'del_teste');
+// Configurações do banco de dados SQLite
+define('DB_PATH', __DIR__ . '/database/plataforma.sqlite');
 
 // URL base do projeto
 $URL_BASE = "http://localhost/Plataforma-de-economia-compartilhada";

@@ -46,7 +46,7 @@ if ($table_exists) {
     $responses_stmt->bind_param("i", $user_id);
     $responses_stmt->execute();
     $responses_result = $responses_stmt->get_result();
-    
+
     while ($response = $responses_result->fetch_assoc()) {
         $responses[] = $response;
     }
@@ -96,7 +96,7 @@ if ($table_exists) {
     </style>
 </head>
 <body>
-    
+
     <div class="container py-4">
         <!-- Profile Header -->
         <div class="profile-header shadow-sm">
@@ -129,7 +129,7 @@ if ($table_exists) {
                 </div>
             </div>
         </div>
-        
+
         <!-- Profile Content -->
         <div class="row">
             <div class="col-md-3">
@@ -151,7 +151,7 @@ if ($table_exists) {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card shadow-sm">
                     <div class="card-header bg-info text-white">
                         <h5 class="mb-0">Estatísticas</h5>
@@ -189,7 +189,7 @@ if ($table_exists) {
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-9">
                 <div class="tab-content">
                     <!-- Meus Pedidos -->
@@ -201,7 +201,7 @@ if ($table_exists) {
                                 <i class="bi bi-plus-circle"></i> Novo Pedido
                             </a>
                         </div>
-                        
+
                         <?php if (empty($orders)): ?>
                             <div class="alert alert-info">
                                 <i class="bi bi-info-circle"></i> Você ainda não criou nenhum pedido.
@@ -241,11 +241,11 @@ if ($table_exists) {
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
-                    
+
                     <!-- Respostas Recebidas -->
                     <div class="tab-pane fade" id="v-pills-responses">
                         <h3 class="mb-3">Respostas Recebidas</h3>
-                        
+
                         <?php if (empty($responses)): ?>
                             <div class="alert alert-info">
                                 <i class="bi bi-info-circle"></i> Você ainda não recebeu nenhuma resposta aos seus pedidos.
@@ -278,11 +278,11 @@ if ($table_exists) {
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
-                    
+
                     <!-- Configurações -->
                     <div class="tab-pane fade" id="v-pills-settings">
                         <h3 class="mb-3">Configurações</h3>
-                        
+
                         <div class="card shadow-sm">
                             <div class="card-header bg-light">
                                 <h5 class="mb-0">Localização</h5>
@@ -302,23 +302,23 @@ if ($table_exists) {
                                         <i class="bi bi-exclamation-triangle"></i> Localização não configurada
                                     </div>
                                 <?php endif; ?>
-                                
+
                                 <button id="update-location-btn" class="btn btn-primary">
                                     <i class="bi bi-geo-alt"></i> Atualizar Localização
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div class="card shadow-sm mt-4">
                             <div class="card-header bg-light">
                                 <h5 class="mb-0">Conta</h5>
                             </div>
                             <div class="card-body">
                                 <!-- Configurações -->
-                                <a href="../index.php?page=edit_profile" class="btn btn-outline-primary mb-2">
+                                <a href="index.php?page=edit_profile" class="btn btn-outline-primary mb-2">
                                     <i class="bi bi-pencil"></i> Editar Perfil
                                 </a>
-                                <a href="../index.php?page=change_password" class="btn btn-outline-secondary mb-2">
+                                <a href="index.php?page=change_password" class="btn btn-outline-secondary mb-2">
                                     <i class="bi bi-key"></i> Alterar Senha
                                 </a>
                                 <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
@@ -331,7 +331,7 @@ if ($table_exists) {
             </div>
         </div>
     </div>
-    
+
     <!-- Modal de confirmação de exclusão de pedido -->
     <div class="modal fade" id="deleteOrderModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -350,7 +350,7 @@ if ($table_exists) {
             </div>
         </div>
     </div>
-    
+
     <!-- Modal de confirmação de exclusão de conta -->
     <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -370,7 +370,7 @@ if ($table_exists) {
                         <li>Remover todas as suas respostas</li>
                     </ul>
                     <p><strong>Esta ação não pode ser desfeita!</strong></p>
-                    
+
                     <div class="mb-3">
                         <label for="confirmPassword" class="form-label">Digite sua senha para confirmar:</label>
                         <input type="password" class="form-control" id="confirmPassword" required>
@@ -383,7 +383,7 @@ if ($table_exists) {
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Função para confirmar exclusão de pedido
@@ -392,7 +392,7 @@ if ($table_exists) {
             document.getElementById('confirmDeleteBtn').href = '../index.php?page=delete_order&id=' + orderId;
             modal.show();
         }
-        
+
         // Atualizar localização
         document.getElementById('update-location-btn')?.addEventListener('click', function() {
             if (navigator.geolocation) {
@@ -448,7 +448,7 @@ if ($table_exists) {
             xhr.send(`password=${encodeURIComponent(password)}`);
         });
     </script>
-    
+
     <?php include __DIR__ . '/../includes/footer.php'; ?>
 </body>
 </html>

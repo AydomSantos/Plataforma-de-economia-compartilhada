@@ -1,34 +1,49 @@
 <?php
-require_once __DIR__ . '/../includes/db.php'; // Garante $conn disponível
-if (session_status() == PHP_SESSION_NONE) session_start(); // Garante $_SESSION disponível
+require_once __DIR__ . '/../includes/db.php';
 
-// A sessão já foi iniciada e a conexão $conn já está disponível,
-// e o usuário já foi verificado como logado pelo index.php principal.
+// Buscar estatísticas da plataforma
+try {
+    $stmt = $conn->prepare("SELECT COUNT(*) as total_users FROM users WHERE status = 'ativo'");
+    $stmt->execute();
+    $total_users = $stmt->fetch()['total_users'];
 
-// Obter informações do usuário da sessão
-$user_id = $_SESSION['user_id'];
-$user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
+    $stmt = $conn->prepare("SELECT COUNT(*) as total_services FROM services WHERE status = 'ativo'");
+    $stmt->execute();
+    $total_services = $stmt->fetch()['total_services'];
 
+    $stmt = $conn->prepare("SELECT COUNT(*) as total_contracts FROM contracts WHERE status IN ('concluido', 'em_andamento')");
+    $stmt->execute();
+    $total_contracts = $stmt->fetch()['total_contracts'];
 
-// Obter informações adicionais do usuário do banco de dados
-// Use $conn que foi definido no index.php
-$user_query = "SELECT * FROM users WHERE id = ?";
-$user_stmt = $conn->prepare($user_query);
-$user_stmt->bind_param("i", $user_id);
-$user_stmt->execute();
-$user_result = $user_stmt->get_result();
-$user = $user_result->fetch_assoc();
-$user_stmt->close();
+    // Buscar serviços em destaque
+    $stmt = $conn->prepare("
+        SELECT s.*, u.name as provider_name, c.name as category_name, c.icon, c.color
+        FROM services s 
+        JOIN users u ON s.user_id = u.id 
+        JOIN categories c ON s.category_id = c.id 
+        WHERE s.status = 'ativo' 
+        ORDER BY s.views_count DESC, s.created_at DESC 
+        LIMIT 6
+    ");
+    $stmt->execute();
+    $featured_services = $stmt->fetchAll();
 
-// Obter pedidos recentes
-$recent_orders_query = "SELECT o.*, u.name FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC LIMIT 3";
-$recent_orders_result = $conn->query($recent_orders_query); // Use $conn
-$recent_orders = [];
-if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
-    while ($row = $recent_orders_result->fetch_assoc()) {
-        $recent_orders[] = $row;
-    }
+    // Buscar categorias
+    $stmt = $conn->prepare("SELECT * FROM categories WHERE status = 'ativo' ORDER BY name");
+    $stmt->execute();
+    $categories = $stmt->fetchAll();
+
+} catch (Exception $e) {
+    $total_users = 0;
+    $total_services = 0;
+    $total_contracts = 0;
+    $featured_services = [];
+    $categories = [];
 }
+
+// Verificar se o usuário está logado
+$user_logged_in = isset($_SESSION['user_id']);
+$user_name = $_SESSION['user_name'] ?? '';
 ?>
 
 <!DOCTYPE html>
@@ -36,295 +51,235 @@ if ($recent_orders_result && $recent_orders_result->num_rows > 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página Inicial - Economia Compartilhada</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>EconomiaShare - Conectando Pessoas e Oportunidades</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        .card-hover:hover {
-            transform: translateY(-5px);
-            transition: transform 0.3s ease;
-        }
-        .alert-warning {
-            background-color: #fff3cd;
-            color: #856404;
-            padding: 0.75rem 1.25rem;
-            border: 1px solid #ffeeba;
-            border-radius: 0.25rem;
-            margin-top: 1rem;
-        }
-        .btn-warning {
-            background-color: #ffc107;
-            color: #212529;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            border-radius: 0.2rem;
-            margin-left: 0.5rem;
-            cursor: pointer;
-            border: none;
-        }
-        .btn-warning:hover {
-            background-color: #e0a800;
-        }
-    </style>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <nav class="bg-blue-600 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <a href="index.php?page=home" class="flex-shrink-0 flex items-center text-white font-bold text-xl">
-                        Economia Compartilhada
-                    </a>
-                </div>
-                <div class="flex items-center">
-                    <div class="hidden md:ml-6 md:flex md:space-x-8">
-                        <a href="http://localhost/index.php?page=explore_orders" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
-                            Explorar Pedidos
-                        </a>
-                        <a href="http://localhost/index.php?page=create_order" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
-                            Criar Pedido
-                        </a>
-                        <a href="http://localhost/index.php?page=chat" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium">
-                            Chat
-                        </a>
-                    </div>
-                    <div class="ml-3 relative flex items-center">
-                        <div class="relative">
-                            <a href="http://localhost/index.php?page=profile" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
-                                <img class="h-8 w-8 rounded-full" src="https://ui-avatars.com/api/?name=<?php echo urlencode($user_name ?: $user['name']); ?>&background=random" alt="Avatar">
+<body class="bg-light">
+    <?php include __DIR__ . '/../includes/header.php'; ?>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-5">
+        <div class="container">
+            <div class="row align-items-center min-vh-50">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Conecte-se à <span class="text-warning">Economia Compartilhada</span>
+                    </h1>
+                    <p class="lead mb-4">
+                        Descubra oportunidades, ofereça seus serviços e faça parte de uma comunidade 
+                        que promove colaboração e sustentabilidade.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <?php if (!$user_logged_in): ?>
+                            <a href="index.php?page=register" class="btn btn-warning btn-lg px-4">
+                                <i class="bi bi-person-plus me-2"></i>Começar Agora
                             </a>
+                            <a href="index.php?page=login" class="btn btn-outline-light btn-lg px-4">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Fazer Login
+                            </a>
+                        <?php else: ?>
+                            <a href="index.php?page=explore_orders" class="btn btn-warning btn-lg px-4">
+                                <i class="bi bi-search me-2"></i>Explorar Serviços
+                            </a>
+                            <a href="index.php?page=create_order" class="btn btn-outline-light btn-lg px-4">
+                                <i class="bi bi-plus-circle me-2"></i>Oferecer Serviço
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                         alt="Economia Compartilhada" class="img-fluid rounded shadow-lg">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Estatísticas -->
+    <section class="py-5 bg-white">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="bi bi-people-fill text-primary mb-3" style="font-size: 3rem;"></i>
+                            <h3 class="text-primary fw-bold"><?php echo number_format($total_users); ?></h3>
+                            <p class="text-muted mb-0">Usuários Ativos</p>
                         </div>
-                        <a href="http://localhost/index.php?page=logout" class="ml-4 px-3 py-2 rounded-md text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors">
-                            Sair
-                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="bi bi-briefcase-fill text-success mb-3" style="font-size: 3rem;"></i>
+                            <h3 class="text-success fw-bold"><?php echo number_format($total_services); ?></h3>
+                            <p class="text-muted mb-0">Serviços Disponíveis</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <i class="bi bi-handshake-fill text-warning mb-3" style="font-size: 3rem;"></i>
+                            <h3 class="text-warning fw-bold"><?php echo number_format($total_contracts); ?></h3>
+                            <p class="text-muted mb-0">Contratos Realizados</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </nav>
+    </section>
 
-    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex-grow">
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-900">
-                Bem-vindo, <?php echo htmlspecialchars($user_name ?: $user['name']); ?>!
-            </h2>
-            <p class="mt-3 text-gray-600">
-                Explore nossa plataforma de economia compartilhada e descubra novas oportunidades.
-            </p>
-            <?php if (!$user['latitude'] || !$user['longitude']): ?>
-                <div class="alert-warning mt-4">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Sua localização não está configurada. 
-                    <button id="update-location-alert-btn" class="btn-warning">Atualizar Localização</button>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-blue-100 rounded-full p-3">
-                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Explorar Pedidos
-                                </dt>
-                                <dd>
-                                    <div class="text-lg font-medium text-gray-900">
-                                      <a href="http://localhost/index.php?page=explore_orders">Explorar</a>  
-                                    </div>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-6 py-4">
-                    <div class="text-sm">
-                        <a href="http://localhost/index.php?page=explore_orders" class="font-medium text-blue-600 hover:text-blue-900 flex items-center">
-                            Ver todos
-                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </a>
-                    </div>
-                </div>
+    <!-- Categorias -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Explore por Categoria</h2>
+                <p class="text-muted">Encontre o serviço perfeito para suas necessidades</p>
             </div>
-            
-            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-green-100 rounded-full p-3">
-                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Criar Pedido
-                                </dt>
-                                <dd>
-                                    <div class="text-lg font-medium text-gray-900">
-                                        Criar
+            <div class="row">
+                <?php foreach ($categories as $category): ?>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                        <a href="index.php?page=explore_orders&category=<?php echo $category['id']; ?>" 
+                           class="text-decoration-none">
+                            <div class="card border-0 shadow-sm h-100 category-card">
+                                <div class="card-body text-center p-4">
+                                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                         style="width: 60px; height: 60px; background-color: <?php echo $category['color']; ?>20;">
+                                        <i class="<?php echo $category['icon']; ?> text-dark" style="font-size: 1.5rem;"></i>
                                     </div>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-6 py-4">
-                    <div class="text-sm">
-                        <a href="http://localhost/index.php?page=create_order" class="font-medium text-green-600 hover:text-green-900 flex items-center">
-                            Criar
-                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white overflow-hidden shadow rounded-lg card-hover transition-all">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-indigo-100 rounded-full p-3">
-                            <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Meu Perfil
-                                </dt>
-                                <dd>
-                                    <div class="text-lg font-medium text-gray-900">
-                                        Perfil
-                                    </div>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-6 py-4">
-                    <div class="text-sm">
-                        <a href="http://localhost/index.php?page=profile" class="font-medium text-indigo-600 hover:text-indigo-900 flex items-center">
-                            Ver
-                            <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <h5 class="mb-4 text-xl font-bold text-gray-900">Pedidos Recentes</h5>
-            <div class="space-y-3">
-                <?php if (empty($recent_orders)): ?>
-                    <div class="p-4 bg-gray-50 rounded-lg text-center">
-                        <p class="text-gray-500">Nenhum pedido recente encontrado.</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($recent_orders as $order): ?>
-                        <a href="http://localhost/index.php?page=view_order&id=<?php echo $order['id']; ?>" class="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                            <div class="flex justify-between items-start">
-                                <h6 class="font-semibold text-gray-900"><?php echo htmlspecialchars($order['title']); ?></h6>
-                                <small class="text-gray-500 ml-2">
-                                    <?php 
-                                    $created_at = new DateTime($order['created_at']);
-                                    $now = new DateTime();
-                                    $interval = $created_at->diff($now);
-                                    
-                                    if ($interval->d > 0) {
-                                        echo $interval->d . ' dia(s) atrás';
-                                    } elseif ($interval->h > 0) {
-                                        echo $interval->h . ' hora(s) atrás';
-                                    } else {
-                                        echo $interval->i . ' minuto(s) atrás';
-                                    }
-                                    ?>
-                                </small>
-                            </div>
-                            <p class="mt-2 text-gray-600"><?php echo htmlspecialchars(substr($order['description'], 0, 100)) . '...'; ?></p>
-                            <div class="mt-2 flex items-center justify-between">
-                                <small class="text-gray-500">Por: <?php echo htmlspecialchars($order['name']); ?></small>
-                                <span class="inline-block bg-blue-500 text-white rounded-full px-2.5 py-0.5 text-xs font-semibold"><?php echo htmlspecialchars($order['category']); ?></span>
+                                    <h5 class="card-title text-dark"><?php echo htmlspecialchars($category['name']); ?></h5>
+                                    <p class="card-text text-muted small"><?php echo htmlspecialchars($category['description']); ?></p>
+                                </div>
                             </div>
                         </a>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
-    </main>
+    </section>
 
-    <footer class="bg-gray-800 text-white py-8 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                    <h5 class="text-lg font-bold mb-4">Economia Compartilhada</h5>
-                    <p class="text-gray-300">Uma plataforma para conectar pessoas e promover o consumo consciente.</p>
-                </div>
-                <div>
-                    <h5 class="text-lg font-bold mb-4">Links</h5>
-                    <ul class="space-y-2">
-                        <li><a href="http://localhost/index.php?page=about" class="text-gray-300 hover:text-white transition-colors">Sobre nós</a></li>
-                        <li><a href="http://localhost/index.php?page=terms" class="text-gray-300 hover:text-white transition-colors">Termos de uso</a></li>
-                        <li><a href="http://localhost/index.php?page=privacy" class="text-gray-300 hover:text-white transition-colors">Política de privacidade</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h5 class="text-lg font-bold mb-4">Contato</h5>
-                    <ul class="space-y-2">
-                        <li class="flex items-center"><i class="bi bi-envelope mr-2"></i> contato@economiacompartilhada.com</li>
-                        <li class="flex items-center"><i class="bi bi-telephone mr-2"></i> (11) 1234-5678</li>
-                    </ul>
-                </div>
+    <!-- Serviços em Destaque -->
+    <?php if (!empty($featured_services)): ?>
+    <section class="py-5 bg-white">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Serviços em Destaque</h2>
+                <p class="text-muted">Descubra os serviços mais populares da nossa plataforma</p>
             </div>
-            <hr class="my-6 border-gray-700">
-            <div class="text-center text-gray-400">
-                <p>&copy; 2023 Economia Compartilhada. Todos os direitos reservados.</p>
+            <div class="row">
+                <?php foreach ($featured_services as $service): ?>
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <?php if ($service['image_url']): ?>
+                                <img src="<?php echo htmlspecialchars($service['image_url']); ?>" 
+                                     class="card-img-top" style="height: 200px; object-fit: cover;" 
+                                     alt="<?php echo htmlspecialchars($service['title']); ?>">
+                            <?php else: ?>
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="<?php echo $service['icon']; ?> text-muted" style="font-size: 3rem;"></i>
+                                </div>
+                            <?php endif; ?>
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge rounded-pill" style="background-color: <?php echo $service['color']; ?>20; color: <?php echo $service['color']; ?>;">
+                                        <i class="<?php echo $service['icon']; ?> me-1"></i>
+                                        <?php echo htmlspecialchars($service['category_name']); ?>
+                                    </span>
+                                </div>
+                                <h5 class="card-title"><?php echo htmlspecialchars($service['title']); ?></h5>
+                                <p class="card-text text-muted"><?php echo htmlspecialchars(substr($service['description'], 0, 100)); ?>...</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="text-primary">R$ <?php echo number_format($service['price'], 2, ',', '.'); ?></strong>
+                                        <span class="text-muted">/ <?php echo $service['price_unit']; ?></span>
+                                    </div>
+                                    <small class="text-muted">por <?php echo htmlspecialchars($service['provider_name']); ?></small>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div class="d-flex align-items-center">
+                                        <?php if ($service['rating_average'] > 0): ?>
+                                            <div class="text-warning me-1">
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <i class="bi bi-star<?php echo $i <= $service['rating_average'] ? '-fill' : ''; ?>"></i>
+                                                <?php endfor; ?>
+                                            </div>
+                                            <small class="text-muted">(<?php echo $service['rating_count']; ?>)</small>
+                                        <?php else: ?>
+                                            <small class="text-muted">Sem avaliações</small>
+                                        <?php endif; ?>
+                                    </div>
+                                    <a href="index.php?page=view_order&id=<?php echo $service['id']; ?>" 
+                                       class="btn btn-outline-primary btn-sm">Ver Detalhes</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <div class="text-center mt-4">
+                <a href="index.php?page=explore_orders" class="btn btn-primary btn-lg">
+                    Ver Todos os Serviços <i class="bi bi-arrow-right ms-2"></i>
+                </a>
             </div>
         </div>
-    </footer>
+    </section>
+    <?php endif; ?>
 
-    <script>
-        // Script para atualizar a localização do usuário
-        document.getElementById('update-location-alert-btn')?.addEventListener('click', updateLocation);
+    <!-- Como Funciona -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Como Funciona</h2>
+                <p class="text-muted">Simples, seguro e eficiente</p>
+            </div>
+            <div class="row">
+                <div class="col-md-4 text-center mb-4">
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <span class="fw-bold fs-3">1</span>
+                    </div>
+                    <h4>Cadastre-se</h4>
+                    <p class="text-muted">Crie sua conta gratuitamente e complete seu perfil</p>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                    <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <span class="fw-bold fs-3">2</span>
+                    </div>
+                    <h4>Explore ou Ofereça</h4>
+                    <p class="text-muted">Encontre serviços que precisa ou ofereça suas habilidades</p>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                    <div class="rounded-circle bg-warning text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <span class="fw-bold fs-3">3</span>
+                    </div>
+                    <h4>Conecte-se</h4>
+                    <p class="text-muted">Converse, negocie e realize negócios com segurança</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        function updateLocation(e) {
-            if (e) e.preventDefault();
-            
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-                    
-                    // Enviar para o servidor via AJAX usando o roteador
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'http://localhost/index.php?page=update_location', true);
-                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                    xhr.onload = function() {
-                        if (this.status === 200) {
-                            alert('Localização atualizada com sucesso!');
-                            location.reload();
-                        } else {
-                            alert('Erro ao atualizar localização.');
-                        }
-                    };
-                    xhr.send(`latitude=${latitude}&longitude=${longitude}`);
-                }, function() {
-                    alert('Não foi possível obter sua localização. Verifique as permissões do navegador.');
-                });
-            } else {
-                alert('Geolocalização não é suportada pelo seu navegador.');
-            }
-        }
-    </script>
+    <?php include __DIR__ . '/../includes/footer.php'; ?>
+
+    <style>
+    .category-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+    .min-vh-50 {
+        min-height: 50vh;
+    }
+    </style>
 </body>
 </html>
